@@ -1,4 +1,8 @@
 //! MD053 — link-image-reference-definitions.
+//!
+//! Upstream declares this rule `parser: "none"`: it reports nothing when no
+//! micromark-parser rule is enabled (empty token list), reproduced here via
+//! `micromark: false` and the linter's need-tokens gate.
 
 use std::collections::HashSet;
 
@@ -12,7 +16,7 @@ pub const RULE: RuleMeta = RuleMeta {
     names: &["MD053", "link-image-reference-definitions"],
     description: "Link and image reference definitions should be needed",
     tags: &["images", "links"],
-    micromark: true,
+    micromark: false,
     run,
 };
 

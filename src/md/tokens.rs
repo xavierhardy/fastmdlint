@@ -20,6 +20,20 @@ pub struct Token {
     pub in_html_flow: bool,
 }
 
+/// An undefined shortcut reference use (`[label]` with no matching
+/// definition), mirroring micromark's `undefinedReferenceShortcut` tokens.
+#[derive(Debug, Clone)]
+pub struct UndefinedShortcut {
+    /// Raw (unnormalized) label text between the brackets.
+    pub label: String,
+    /// 1-based line number.
+    pub line: usize,
+    /// 1-based start column of the `[` (or `!` for images).
+    pub column: usize,
+    /// Length in characters, brackets included.
+    pub length: usize,
+}
+
 /// The parsed token tree.
 #[derive(Debug, Default)]
 pub struct Tree {
@@ -27,6 +41,8 @@ pub struct Tree {
     pub tokens: Vec<Token>,
     /// Indices of the top-level tokens.
     pub roots: Vec<usize>,
+    /// Undefined shortcut references (used by MD052's `shortcut_syntax`).
+    pub undefined_shortcuts: Vec<UndefinedShortcut>,
 }
 
 impl Tree {

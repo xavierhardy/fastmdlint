@@ -146,8 +146,10 @@ fn md033_inline_html() {
 
 #[test]
 fn md052_undefined_reference() {
+    // MD001 (a micromark rule) is co-enabled so tokens are parsed; MD052
+    // alone would see an empty token list (upstream parser:"none" quirk).
     let md = "# T\n\nA [text][missing] link.\n";
-    let out = run_text(md, json!({ "default": false, "MD052": true }));
+    let out = run_text(md, json!({ "default": false, "MD052": true, "MD001": true }));
     assert!(out.contains("MD052/reference-links-images"), "{out}");
     assert!(out.contains("\"missing\""), "{out}");
 }
@@ -187,6 +189,44 @@ fn md007_blockquote_indent_adjustment() {
     // Correctly indented nested list in a blockquote is clean.
     let md = "> - a\n>   - b\n> - c\n";
     let out = run_text(md, json!({ "default": false, "MD007": true }));
+    assert_eq!(out, "");
+}
+
+#[test]
+fn md052_undefined_references_and_shortcut_syntax() {
+    // Full/collapsed undefined references are flagged; MD001 (a micromark
+    // rule) is co-enabled so the token tree is parsed, matching upstream.
+    let md = "A [text][gone] and [coll][] refs.\n";
+    let out = run_text(md, json!({ "default": false, "MD052": true, "MD001": true }));
+    assert!(out.contains("Missing link or image reference definition: \"gone\""), "{out}");
+    assert!(out.contains("Missing link or image reference definition: \"coll\""), "{out}");
+    // Shortcuts only flagged with shortcut_syntax: true.
+    let md = "A [shortcut] here.\n";
+    let out = run_text(md, json!({ "default": false, "MD052": true, "MD001": true }));
+    assert_eq!(out, "");
+    let out = run_text(
+        md,
+        json!({ "default": false, "MD052": { "shortcut_syntax": true }, "MD001": true }),
+    );
+    assert!(out.contains("Missing link or image reference definition: \"shortcut\""), "{out}");
+    // Default ignored_labels ["x"] keeps task-list checkboxes quiet.
+    let md = "- [x] done\n";
+    let out = run_text(
+        md,
+        json!({ "default": false, "MD052": { "shortcut_syntax": true }, "MD001": true }),
+    );
+    assert_eq!(out, "");
+}
+
+#[test]
+fn md052_md053_parser_none_quirk() {
+    // Upstream MD052/MD053 are parser:"none": with no micromark-parser rule
+    // enabled, the token list is empty and they report nothing.
+    let md = "A [text][gone] ref.\n";
+    let out = run_text(md, json!({ "default": false, "MD052": true }));
+    assert_eq!(out, "");
+    let md = "Text.\n\n[unused]: http://y.com\n";
+    let out = run_text(md, json!({ "default": false, "MD053": true }));
     assert_eq!(out, "");
 }
 

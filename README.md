@@ -84,9 +84,14 @@ autolinks, and emphasis/strong via the delimiter-run algorithm.
 
 Shortcut reference links (`[label]` with a matching definition) are tokenized
 like the reference implementation, so the `MD054` `shortcut` option and link
-rules on shortcut links behave identically; lists inside blockquotes are
-parsed as containers, so `MD007` applies the same blockquote-indent adjustment
-as upstream. Everything exercised by the parity corpus matches exactly.
+rules on shortcut links behave identically; undefined references (full,
+collapsed, and — with `MD052`'s `shortcut_syntax` — shortcut) are detected
+exactly like upstream's undefined-reference tracking; lists inside blockquotes
+are parsed as containers, so `MD007` applies the same blockquote-indent
+adjustment as upstream. Even upstream's `parser: "none"` quirk is reproduced:
+`MD052`/`MD053` see an empty token list (and report nothing) when no
+parser-based rule is enabled. Everything exercised by the parity corpus
+matches exactly.
 
 fastmdlint is written in 100% safe Rust (`#![forbid(unsafe_code)]`).
 

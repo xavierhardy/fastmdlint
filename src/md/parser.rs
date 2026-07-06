@@ -1425,6 +1425,9 @@ impl Parser {
 
         let mut i = 0;
         let mut data_start = 0;
+        // `[` position not to re-attempt as a link start (set when a `![`
+        // image attempt fails; micromark consumes `![` as one label start).
+        let mut suppressed_link_at: Option<usize> = None;
         while i < chars.len() {
             // Emphasis boundaries at i.
             let mut moved = true;
@@ -1548,10 +1551,17 @@ impl Parser {
                     continue;
                 }
             }
-            if c == '[' || (c == '!' && chars.get(i + 1) == Some(&'[')) {
+            if (c == '[' && suppressed_link_at != Some(i))
+                || (c == '!' && chars.get(i + 1) == Some(&'['))
+            {
                 if let Some(end) = self.try_link_image(chars, i, line_no, start_col, cur, &mut data_start) {
                     i = end;
                     continue;
+                }
+                if c == '!' {
+                    // `![` was consumed as a single (failed) image label start;
+                    // micromark does not re-attempt a link at the `[`.
+                    suppressed_link_at = Some(i + 1);
                 }
             }
             if (c == 'h' || c == 'H' || c == 'w' || c == 'W') && is_url_boundary(chars, i) {
@@ -1911,9 +1921,18 @@ impl Parser {
             (k + 1, Follow::Reference(after, k))
         } else {
             // Shortcut reference: `[text]` is a link only if `text` is a
-            // defined label; otherwise it is literal text.
+            // defined label; otherwise it is literal text, recorded as an
+            // undefined shortcut use (micromark's undefinedReferenceShortcut).
             let label: String = chars[br_open + 1..rb].iter().collect();
             if !self.defined_labels.contains(&normalize_label(&label)) {
+                if !label.trim().is_empty() && !label.contains(']') {
+                    self.tree.undefined_shortcuts.push(super::tokens::UndefinedShortcut {
+                        label,
+                        line: line_no,
+                        column: start_col + i,
+                        length: rb + 1 - i,
+                    });
+                }
                 return None;
             }
             (rb + 1, Follow::Shortcut)

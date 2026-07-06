@@ -325,8 +325,18 @@ fn lint_with_raw(
     let uncleared_lines = split_lines(&stripped);
     let (per_line, enabled_rule_ids) = enabled_per_line(cfg, &uncleared_lines, fm_len);
 
-    // Parse tree from uncleared, front-matter-stripped content.
-    let tree = Parser::parse(&stripped);
+    // Parse tree from uncleared, front-matter-stripped content — but only if
+    // some enabled rule uses the parser. markdownlint skips micromark parsing
+    // otherwise, which makes its parser-"none" rules (MD047/MD052/MD053) see
+    // an empty token list; an empty tree reproduces that.
+    let need_tokens = RULES
+        .iter()
+        .any(|r| r.micromark && enabled_rule_ids.contains(&r.names[0]));
+    let tree = if need_tokens {
+        Parser::parse(&stripped)
+    } else {
+        crate::md::Tree::default()
+    };
 
     // Lines given to rules: HTML-comment cleared.
     let cleared = clear_html_comment_text(&stripped);

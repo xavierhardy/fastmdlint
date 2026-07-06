@@ -62,20 +62,19 @@ pub fn references(tree: &Tree) -> Vec<RefUse> {
     out
 }
 
-/// Shortcut reference labels: `[label]` sequences left as `data` tokens (the
-/// parser does not form links for them), normalized.
-pub fn shortcuts(tree: &Tree) -> std::collections::HashSet<String> {
-    let re = {
-        static RE: OnceLock<Regex> = OnceLock::new();
-        RE.get_or_init(|| Regex::new(r"\[([^\]]+)\]").unwrap())
-    };
-    let mut out = std::collections::HashSet::new();
-    for &d in &tree.filter_idx(&["data"]) {
-        for caps in re.captures_iter(&tree.get(d).text) {
-            out.insert(normalize(&caps[1]));
-        }
-    }
-    out
+/// Undefined shortcut reference uses recorded by the parser (`[label]` with
+/// no matching definition), for MD052's `shortcut_syntax` option.
+pub fn undefined_shortcut_uses(tree: &Tree) -> Vec<RefUse> {
+    tree.undefined_shortcuts
+        .iter()
+        .map(|u| RefUse {
+            label: normalize(&u.label),
+            line0: u.line - 1,
+            col0: u.column - 1,
+            len: u.length,
+            shortcut: true,
+        })
+        .collect()
 }
 
 /// Definition label -> 0-based line index (first occurrence) and the list of
