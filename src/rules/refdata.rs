@@ -26,8 +26,9 @@ pub struct RefUse {
     pub shortcut: bool,
 }
 
-/// Full/collapsed reference uses from `link`/`image` tokens (the parser does
-/// not tokenize shortcut references, so those are not included).
+/// Full/collapsed reference uses from `link`/`image` tokens. Shortcut
+/// references are excluded: the parser only tokenizes them when the label is
+/// defined, so they can never be an *undefined* reference.
 pub fn references(tree: &Tree) -> Vec<RefUse> {
     let mut out = Vec::new();
     for &link in &tree.filter_idx(&["link", "image"]) {
@@ -37,7 +38,7 @@ pub fn references(tree: &Tree) -> Vec<RefUse> {
         }
         let reference = tree.descendants_by_type(link, &[&["reference"]]);
         if reference.is_empty() {
-            continue; // shortcut (untokenized) — skip
+            continue; // shortcut (defined by construction) — skip
         }
         let ref_string = tree
             .descendants_by_type(link, &[&["reference"], &["referenceString"]])

@@ -1,7 +1,8 @@
 //! MD054 — link-image-style.
 //!
-//! Note: shortcut reference links (`[label]`) are not tokenized by the parser,
-//! so the `shortcut` option is not enforced for them; every other style is.
+//! Shortcut reference links (`[label]` with a matching definition) are
+//! tokenized as links with only a label child, so the `shortcut` option is
+//! enforced like every other style.
 
 use super::refdata;
 use super::{Emit, FixInfo, Params, RuleMeta};

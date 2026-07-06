@@ -82,11 +82,11 @@ HTML blocks, reference definitions, GFM tables, and the full inline layer —
 code spans, autolinks, raw HTML, links/images (inline and reference), literal
 autolinks, and emphasis/strong via the delimiter-run algorithm.
 
-A few narrow edge cases are approximated (documented at the top of the
-affected rule modules): shortcut reference links are matched by scan rather
-than tokenized (affects the non-default `MD052`/`MD054` shortcut options), and
-`MD007` does not model the blockquote-indent adjustment. Everything exercised
-by the parity corpus matches exactly.
+Shortcut reference links (`[label]` with a matching definition) are tokenized
+like the reference implementation, so the `MD054` `shortcut` option and link
+rules on shortcut links behave identically; lists inside blockquotes are
+parsed as containers, so `MD007` applies the same blockquote-indent adjustment
+as upstream. Everything exercised by the parity corpus matches exactly.
 
 fastmdlint is written in 100% safe Rust (`#![forbid(unsafe_code)]`).
 

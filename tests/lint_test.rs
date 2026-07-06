@@ -160,6 +160,37 @@ fn md027_blockquote_extra_space() {
 }
 
 #[test]
+fn md054_shortcut_reference_links() {
+    // A defined shortcut reference is a real link; with shortcut:false it is
+    // flagged (matches markdownlint-cli).
+    let md = "A [sc] link.\n\n[sc]: http://x.com\n";
+    let out = run_text(md, json!({ "default": false, "MD054": { "shortcut": false } }));
+    assert_eq!(
+        out,
+        "f.md:1:3 error MD054/link-image-style Link and image style [Context: \"[sc]\"]"
+    );
+    // An undefined bracket is plain text, not a link — nothing to flag.
+    let md = "A [notdefined] text.\n";
+    let out = run_text(md, json!({ "default": false, "MD054": { "shortcut": false } }));
+    assert_eq!(out, "");
+}
+
+#[test]
+fn md007_blockquote_indent_adjustment() {
+    // Indentation is measured after the blockquote prefix, like upstream.
+    let md = "> - item\n>    - over-indented nested\n";
+    let out = run_text(md, json!({ "default": false, "MD007": true }));
+    assert_eq!(
+        out,
+        "f.md:2:1 error MD007/ul-indent Unordered list indentation [Expected: 2; Actual: 3]"
+    );
+    // Correctly indented nested list in a blockquote is clean.
+    let md = "> - a\n>   - b\n> - c\n";
+    let out = run_text(md, json!({ "default": false, "MD007": true }));
+    assert_eq!(out, "");
+}
+
+#[test]
 fn front_matter_offsets_line_numbers() {
     let md = "---\ntitle: Test\n---\n\n#Heading\n";
     let out = run_text(md, json!({ "default": false, "MD018": true }));

@@ -1,8 +1,6 @@
 //! MD007 — ul-indent.
-//!
-//! Note: the blockquote-indent adjustment and gfmFootnoteDefinition base
-//! indent from upstream are not modelled (lists inside block quotes/footnotes
-//! may diverge); plain nested unordered lists match.
+
+use std::collections::HashMap;
 
 use super::helpers::ConfigExt;
 use super::{Emit, FixInfo, Params, RuleMeta};
@@ -21,58 +19,79 @@ fn run(params: &Params, emit: &mut Emit) {
     let start_indent = params.config.opt_i64("start_indent", indent);
     let tree = params.tree;
 
-    for &list in &tree.filter_idx(&["listUnordered"]) {
-        // Compute nesting depth by walking unordered-list ancestors.
-        let mut nesting: i64 = 0;
-        let mut current = list;
-        loop {
-            let Some(p) = tree.parent_of_type(current, &["blockQuote", "listOrdered", "listUnordered"])
-            else {
-                break;
-            };
-            match tree.get(p).kind {
-                "listUnordered" => {
-                    nesting += 1;
-                    current = p;
-                    continue;
+    // Mirror the upstream document-order traversal over blockQuotePrefix /
+    // listItemPrefix / listUnordered, tracking the last blockquote prefix so
+    // its width can be subtracted from a list item's indentation.
+    let mut unordered_list_nesting: HashMap<usize, i64> = HashMap::new();
+    let mut last_bq_prefix: Option<usize> = None;
+    for &token in &tree.filter_idx(&["blockQuotePrefix", "listItemPrefix", "listUnordered"]) {
+        let t = tree.get(token);
+        match t.kind {
+            "blockQuotePrefix" => last_bq_prefix = Some(token),
+            "listUnordered" => {
+                let mut nesting: i64 = 0;
+                let mut current = token;
+                loop {
+                    let Some(p) =
+                        tree.parent_of_type(current, &["blockQuote", "listOrdered", "listUnordered"])
+                    else {
+                        break;
+                    };
+                    match tree.get(p).kind {
+                        "listUnordered" => {
+                            nesting += 1;
+                            current = p;
+                            continue;
+                        }
+                        "listOrdered" => {
+                            nesting = -1;
+                            break;
+                        }
+                        _ => break, // blockQuote
+                    }
                 }
-                "listOrdered" => {
-                    nesting = -1;
-                    break;
+                if nesting >= 0 {
+                    unordered_list_nesting.insert(token, nesting);
                 }
-                _ => break, // blockQuote
             }
-        }
-        if nesting < 0 {
-            continue;
-        }
-        let prefixes: Vec<usize> = tree
-            .get(list)
-            .children
-            .iter()
-            .copied()
-            .filter(|&c| tree.get(c).kind == "listItemPrefix")
-            .collect();
-        for &prefix in &prefixes {
-            let pt = tree.get(prefix);
-            let expected_indent =
-                (if start_indented { start_indent } else { 0 }) + nesting * indent;
-            let actual_indent = pt.start_column as i64 - 1;
-            let range = (1, pt.end_column - 1);
-            emit.add_detail_if(
-                pt.start_line,
-                &expected_indent.to_string(),
-                &actual_indent.to_string(),
-                None,
-                None,
-                Some(range),
-                Some(FixInfo {
-                    edit_column: Some((pt.start_column as i64 - actual_indent) as usize),
-                    delete_count: Some((actual_indent - expected_indent).max(0)),
-                    insert_text: Some(" ".repeat((expected_indent - actual_indent).max(0) as usize)),
-                    ..Default::default()
-                }),
-            );
+            _ => {
+                // listItemPrefix
+                let Some(parent) = t.parent else { continue };
+                let Some(&nesting) = unordered_list_nesting.get(&parent) else {
+                    continue;
+                };
+                let expected_indent =
+                    (if start_indented { start_indent } else { 0 }) + nesting * indent;
+                let bq_adjustment = match last_bq_prefix {
+                    Some(bq) => {
+                        let b = tree.get(bq);
+                        if b.end_line == t.start_line {
+                            b.end_column as i64 - 1
+                        } else {
+                            0
+                        }
+                    }
+                    None => 0,
+                };
+                let actual_indent = t.start_column as i64 - 1 - bq_adjustment;
+                let range = (1, t.end_column - 1);
+                emit.add_detail_if(
+                    t.start_line,
+                    &expected_indent.to_string(),
+                    &actual_indent.to_string(),
+                    None,
+                    None,
+                    Some(range),
+                    Some(FixInfo {
+                        edit_column: Some((t.start_column as i64 - actual_indent) as usize),
+                        delete_count: Some((actual_indent - expected_indent).max(0)),
+                        insert_text: Some(
+                            " ".repeat((expected_indent - actual_indent).max(0) as usize),
+                        ),
+                        ..Default::default()
+                    }),
+                );
+            }
         }
     }
 }

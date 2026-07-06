@@ -24,6 +24,9 @@ pub struct Parser {
     lines: Vec<Line>,
     tree: Tree,
     in_html_flow: bool,
+    /// Normalized labels of reference definitions in the document, used to
+    /// decide whether `[text]` is a (shortcut) reference link or literal text.
+    defined_labels: std::collections::HashSet<String>,
 }
 
 /// Result of scanning a line's leading indentation.
@@ -52,10 +55,12 @@ fn is_blank(chars: &[char]) -> bool {
 impl Parser {
     pub fn parse(content: &str) -> Tree {
         let lines = split_lines(content);
+        let defined_labels = collect_definition_labels(&lines);
         let mut p = Parser {
             lines,
             tree: Tree::default(),
             in_html_flow: false,
+            defined_labels,
         };
         p.run();
         p.tree
@@ -792,6 +797,21 @@ impl Parser {
         let bq = self.tok("blockQuote", sl, 1, end + 1, last_len + 1, String::new());
         let bqidx = self.push(bq, None);
 
+        // If the blockquote's content is a list, parse it as a container so
+        // that list rules (MD007 etc.) see the nested structure with correct
+        // columns. Requires a uniform `>`/`> ` prefix on every line.
+        if let Some(wmap) = uniform_bq_prefixes(&self.lines, start, end) {
+            let first: String = {
+                let lc = &self.lines[start].chars;
+                lc.iter().skip(wmap[0]).collect()
+            };
+            if list_marker(&first).is_some() {
+                self.emit_bq_list(start, end, bqidx, &wmap);
+                self.emit_line_ending(end, last_len + 1, None);
+                return end + 1;
+            }
+        }
+
         // Line 1 prefix is a direct child of the blockQuote.
         let first_content_col = self.emit_bq_prefix(start, bqidx);
         let content = self.tok("content", sl, first_content_col + 1, end + 1, last_len + 1, String::new());
@@ -857,6 +877,75 @@ impl Parser {
             self.push(lp, Some(parent));
         }
         ee
+    }
+
+    /// Emit just the `blockQuotePrefix` (marker + optional single space) for
+    /// line `k` under `parent`; no extra-space `linePrefix`.
+    fn emit_bq_prefix_marker(&mut self, k: usize, parent: usize) {
+        let lc = self.lines[k].chars.clone();
+        let line_no = k + 1;
+        let lead = leading_spaces(&lc);
+        if lead >= 4 || lc.get(lead) != Some(&'>') {
+            return;
+        }
+        let marker_col = lead;
+        let has_space = lc.get(marker_col + 1) == Some(&' ');
+        let pe = if has_space { marker_col + 2 } else { marker_col + 1 };
+        let prefix = self.tok(
+            "blockQuotePrefix",
+            line_no,
+            marker_col + 1,
+            line_no,
+            pe + 1,
+            lc[marker_col..pe].iter().collect(),
+        );
+        let pidx = self.push(prefix, Some(parent));
+        let marker = self.tok("blockQuoteMarker", line_no, marker_col + 1, line_no, marker_col + 2, ">".into());
+        self.push(marker, Some(pidx));
+        if has_space {
+            let w = self.tok("blockQuotePrefixWhitespace", line_no, marker_col + 2, line_no, pe + 1, " ".into());
+            self.push(w, Some(pidx));
+        }
+    }
+
+    /// Parse a blockquote whose content is a list: sub-parse the de-prefixed
+    /// content and re-emit it under the blockquote with column offsets and
+    /// interleaved `blockQuotePrefix` tokens.
+    fn emit_bq_list(&mut self, start: usize, end: usize, bqidx: usize, wmap: &[usize]) {
+        let mut stripped = String::new();
+        for (i, k) in (start..=end).enumerate() {
+            if i > 0 {
+                stripped.push('\n');
+            }
+            let lc = &self.lines[k].chars;
+            stripped.extend(lc.iter().skip(wmap[i]));
+        }
+        let sub = Parser::parse(&stripped);
+        self.emit_bq_prefix_marker(start, bqidx);
+        let roots = sub.roots.clone();
+        for r in roots {
+            self.reemit_bq(&sub, r, bqidx, wmap, start, end);
+        }
+    }
+
+    fn reemit_bq(&mut self, sub: &Tree, sidx: usize, new_parent: usize, wmap: &[usize], start: usize, end: usize) {
+        let s = &sub.tokens[sidx];
+        let (kind, ssl, ssc, sel, sec) = (s.kind, s.start_line, s.start_column, s.end_line, s.end_column);
+        let text = s.text.clone();
+        let children = s.children.clone();
+        let wstart = wmap.get(ssl.saturating_sub(1)).copied().unwrap_or(0);
+        let wend = wmap.get(sel.saturating_sub(1)).copied().unwrap_or(0);
+        let tok = self.tok(kind, start + ssl, ssc + wstart, start + sel, sec + wend, text);
+        let nidx = self.push(tok, Some(new_parent));
+        for c in children {
+            self.reemit_bq(sub, c, nidx, wmap, start, end);
+        }
+        if kind == "lineEnding" {
+            let next0 = start + ssl; // 0-based original line after the ending
+            if next0 <= end {
+                self.emit_bq_prefix_marker(next0, new_parent);
+            }
+        }
     }
 
     // --- list (CommonMark-ish, single pass) ---
@@ -1797,11 +1886,16 @@ impl Parser {
             j += 1;
         }
         let rb = rb?;
-        // Determine what follows: resource '(' or reference '['.
+        // Determine what follows: resource '(', reference '[', or shortcut.
         let after = rb + 1;
-        let (end, kind_ref) = if chars.get(after) == Some(&'(') {
+        enum Follow {
+            Inline,
+            Reference(usize, usize),
+            Shortcut,
+        }
+        let (end, follow) = if chars.get(after) == Some(&'(') {
             let close = find_paren_close(chars, after)?;
-            (close + 1, None)
+            (close + 1, Follow::Inline)
         } else if chars.get(after) == Some(&'[') {
             // reference [label][ref]
             let mut k = after + 1;
@@ -1814,9 +1908,15 @@ impl Parser {
             if k >= chars.len() {
                 return None;
             }
-            (k + 1, Some((after, k)))
+            (k + 1, Follow::Reference(after, k))
         } else {
-            return None; // shortcut references need definitions; skip
+            // Shortcut reference: `[text]` is a link only if `text` is a
+            // defined label; otherwise it is literal text.
+            let label: String = chars[br_open + 1..rb].iter().collect();
+            if !self.defined_labels.contains(&normalize_label(&label)) {
+                return None;
+            }
+            (rb + 1, Follow::Shortcut)
         };
 
         self.flush_data(*data_start, i, chars, line_no, start_col, parent);
@@ -1871,7 +1971,7 @@ impl Parser {
         let lm2 = self.tok("labelMarker", line_no, start_col + rb, line_no, start_col + rb + 1, "]".into());
         self.push(lm2, Some(lidx));
 
-        if let Some((ref_open, ref_close)) = kind_ref {
+        if let Follow::Reference(ref_open, ref_close) = follow {
             // reference token
             let reference = self.tok(
                 "reference",
@@ -1906,12 +2006,13 @@ impl Parser {
             }
             let rm2 = self.tok("referenceMarker", line_no, start_col + ref_close, line_no, start_col + ref_close + 1, "]".into());
             self.push(rm2, Some(ridx));
-        } else {
+        } else if let Follow::Inline = follow {
             // inline resource ( dest "title" )
             let res_open = after;
             let res_close = end - 1;
             self.emit_resource(chars, res_open, res_close, line_no, start_col, nidx);
         }
+        // Follow::Shortcut emits only the label (no reference/resource).
         *data_start = end;
         Some(end)
     }
@@ -2618,6 +2719,58 @@ fn delimiter_row_cells(lc: &[char]) -> Option<usize> {
         }
     }
     Some(cells.len())
+}
+
+/// Prefix width (marker + optional single space) for every line of a
+/// blockquote, or `None` if any line lacks a `>` prefix (lazy continuation).
+fn uniform_bq_prefixes(lines: &[Line], start: usize, end: usize) -> Option<Vec<usize>> {
+    let mut widths = Vec::new();
+    for k in start..=end {
+        let lc = &lines[k].chars;
+        let lead = leading_spaces(lc);
+        if lead >= 4 || lc.get(lead) != Some(&'>') {
+            return None;
+        }
+        let mut w = lead + 1;
+        if lc.get(w) == Some(&' ') {
+            w += 1;
+        }
+        widths.push(w);
+    }
+    Some(widths)
+}
+
+/// Normalize a reference label (lowercase, trim, collapse internal whitespace).
+fn normalize_label(s: &str) -> String {
+    let mut out = String::new();
+    let mut prev_ws = false;
+    for c in s.trim().chars() {
+        if c.is_whitespace() {
+            if !prev_ws {
+                out.push(' ');
+            }
+            prev_ws = true;
+        } else {
+            out.extend(c.to_lowercase());
+            prev_ws = false;
+        }
+    }
+    out
+}
+
+/// Collect normalized labels of all reference definitions in the document.
+fn collect_definition_labels(lines: &[Line]) -> std::collections::HashSet<String> {
+    use std::sync::OnceLock;
+    static RE: OnceLock<regex::Regex> = OnceLock::new();
+    let re = RE.get_or_init(|| regex::Regex::new(r"^ {0,3}\[([^\]]+)\]:\s*\S").unwrap());
+    let mut out = std::collections::HashSet::new();
+    for line in lines {
+        let s: String = line.chars.iter().collect();
+        if let Some(c) = re.captures(&s) {
+            out.insert(normalize_label(&c[1]));
+        }
+    }
+    out
 }
 
 /// A link reference definition line: `[label]: destination`.

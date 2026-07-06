@@ -1,7 +1,9 @@
 //! MD052 — reference-links-images.
 //!
-//! Note: shortcut references (`[label]`) are not tokenized, so the
-//! non-default `shortcut_syntax` option only checks full/collapsed references.
+//! Shortcut references (`[label]`) are tokenized as links only when the label
+//! is defined; an undefined shortcut therefore remains plain text and — like
+//! the reference implementation, which treats bracketed text as ambiguous —
+//! is not flagged.
 
 use std::collections::HashSet;
 
