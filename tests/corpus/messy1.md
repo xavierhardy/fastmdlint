@@ -22,4 +22,4 @@ no lang fence
 # dup
 # dup
 
-Reversed link (here)[http://example.com] text.
+Reversed link (here)[some-ref] text.

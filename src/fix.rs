@@ -1,8 +1,8 @@
 //! Auto-fix engine: a faithful port of markdownlint's `applyFixes`, plus a
 //! unified-diff renderer for `--dry-run`.
 
-use crate::config::ResolvedConfig;
-use crate::linter::{lint, split_lines};
+use crate::config::Config;
+use crate::linter::{lint_config, split_lines};
 use crate::rules::FixInfo;
 
 #[derive(Clone)]
@@ -159,8 +159,8 @@ pub struct FixResult {
 }
 
 /// Lint `content`, then apply all reported fixes once (like `markdownlint --fix`).
-pub fn fix_content(content: &str, cfg: &ResolvedConfig) -> FixResult {
-    let errors = lint(content, cfg);
+pub fn fix_content(content: &str, cfg: &Config) -> FixResult {
+    let errors = lint_config(content, cfg);
     let fixes: Vec<(usize, FixInfo)> = errors
         .into_iter()
         .filter_map(|e| e.fix_info.map(|fi| (e.line_number, fi)))

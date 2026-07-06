@@ -213,6 +213,29 @@ fn enabled_per_line(
     (per_line, any)
 }
 
+/// Apply `<!-- markdownlint-configure-file <json> -->` directives found
+/// anywhere in `content`, shallow-merging each parsed object into `raw`.
+fn apply_configure_file(mut raw: serde_json::Value, content: &str) -> serde_json::Value {
+    for caps in inline_comment_re().captures_iter(content) {
+        let action = caps.get(2).unwrap().as_str();
+        if !action.eq_ignore_ascii_case("configure-file") {
+            continue;
+        }
+        let start = caps.get(1).unwrap().end();
+        if let Some(rel) = content[start..].find("-->") {
+            let param = content[start..start + rel].trim();
+            if let Ok(parsed) = crate::config::parse_config_content(param) {
+                if let (Some(base), Some(over)) = (raw.as_object_mut(), parsed.as_object()) {
+                    for (k, v) in over {
+                        base.insert(k.clone(), v.clone());
+                    }
+                }
+            }
+        }
+    }
+    raw
+}
+
 fn scan_inline(line: &str) -> Vec<(String, String)> {
     let mut out = Vec::new();
     for caps in inline_comment_re().captures_iter(line) {
@@ -267,11 +290,37 @@ fn build_alias_map() -> HashMap<String, Vec<&'static str>> {
 
 /// Lint markdown `content` with the resolved configuration.
 pub fn lint(content: &str, cfg: &ResolvedConfig) -> Vec<LintError> {
+    lint_with_raw(content, cfg, None)
+}
+
+/// Lint using the raw [`Config`], honouring document-wide
+/// `markdownlint-configure-file` directives (which merge into the config).
+pub fn lint_config(content: &str, raw: &crate::config::Config) -> Vec<LintError> {
+    let resolved = raw.resolve();
+    lint_with_raw(content, &resolved, Some(raw))
+}
+
+fn lint_with_raw(
+    content: &str,
+    cfg: &ResolvedConfig,
+    raw: Option<&crate::config::Config>,
+) -> Vec<LintError> {
     // Strip BOM.
     let content = content.strip_prefix('\u{feff}').unwrap_or(content);
     // Remove front matter.
     let (stripped, fm_lines) = remove_front_matter(content);
     let fm_len = fm_lines.len();
+
+    // Apply configure-file directives (document-wide config merge).
+    let owned_resolved;
+    let cfg: &ResolvedConfig = match raw {
+        Some(raw) => {
+            let merged = apply_configure_file(raw.raw.clone(), &stripped);
+            owned_resolved = crate::config::Config::from_value(merged).resolve();
+            &owned_resolved
+        }
+        None => cfg,
+    };
 
     let uncleared_lines = split_lines(&stripped);
     let (per_line, enabled_rule_ids) = enabled_per_line(cfg, &uncleared_lines, fm_len);

@@ -52,11 +52,17 @@ micromark's flattened token list — the order rules iterate in. Positions are
 reports. The tree shape was checked against the real tree using a token dumper
 built on markdownlint's own `micromark-parse` module.
 
-The block parser is faithful for the common CommonMark constructs (headings,
-code blocks, thematic breaks, lists with marker-change splitting, blockquotes,
-paragraphs with setext detection and list interruption). Deep inline
-constructs (emphasis, links/images, inline HTML, tables) are not yet fully
-tokenized, which bounds the set of rules currently at parity.
+The parser covers the CommonMark + GFM constructs the rules need: ATX/setext
+headings, fenced/indented code, thematic breaks, ordered/unordered lists (with
+CommonMark nesting by content column and marker-change splitting), blockquotes
+(with per-line `blockQuotePrefix`/`linePrefix`), HTML blocks (re-parsed into
+`htmlText` children), link reference definitions, GFM tables, and paragraphs
+with setext detection and paragraph interruption. The inline layer emits code
+spans (with padding), autolinks, raw HTML, links/images (inline and
+reference), literal autolinks (URL + email), and emphasis/strong resolved with
+a pragmatic version of the CommonMark delimiter-run algorithm
+(`emphasis_spans`); unmatched delimiter runs are split into standalone `data`
+tokens exactly as micromark does.
 
 ## The linting pipeline
 

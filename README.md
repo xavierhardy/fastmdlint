@@ -65,20 +65,28 @@ fastmdlint reads the same configuration as markdownlint-cli:
 
 ## Rule coverage
 
-fastmdlint currently implements and verifies **25** of markdownlint's rules at
-byte-for-byte parity:
+fastmdlint implements **all 52** of markdownlint's rules at byte-for-byte
+parity:
 
-`MD001` `MD003` `MD004` `MD009` `MD010` `MD011` `MD012` `MD013` `MD014`
-`MD018` `MD019` `MD021` `MD022` `MD023` `MD024` `MD025` `MD026` `MD031`
-`MD032` `MD035` `MD040` `MD041` `MD046` `MD047` `MD048`
+`MD001` `MD003` `MD004` `MD005` `MD007` `MD009` `MD010` `MD011` `MD012`
+`MD013` `MD014` `MD018` `MD019` `MD020` `MD021` `MD022` `MD023` `MD024`
+`MD025` `MD026` `MD027` `MD028` `MD029` `MD030` `MD031` `MD032` `MD033`
+`MD034` `MD035` `MD036` `MD037` `MD038` `MD039` `MD040` `MD041` `MD042`
+`MD043` `MD044` `MD045` `MD046` `MD047` `MD048` `MD049` `MD050` `MD051`
+`MD052` `MD053` `MD054` `MD055` `MD056` `MD058` `MD059` `MD060`
 
-The remaining rules (`MD005`, `MD007`, `MD020`, `MD027`–`MD030`, `MD033`,
-`MD034`, `MD036`–`MD039`, `MD042`–`MD045`, `MD049`–`MD060`) are not yet
-implemented. They mostly depend on inline constructs (emphasis, links, images,
-HTML, tables) that the parser does not yet fully tokenize; the architecture is
-built so they can be added incrementally, each gated on the parity harness.
-When one of these rules is enabled it simply produces no output rather than an
-incorrect one.
+The parser reproduces the CommonMark + GFM constructs the rules depend on:
+ATX/setext headings, fenced/indented code, blockquotes (with per-line
+prefixes), ordered/unordered lists (with CommonMark nesting), thematic breaks,
+HTML blocks, reference definitions, GFM tables, and the full inline layer —
+code spans, autolinks, raw HTML, links/images (inline and reference), literal
+autolinks, and emphasis/strong via the delimiter-run algorithm.
+
+A few narrow edge cases are approximated (documented at the top of the
+affected rule modules): shortcut reference links are matched by scan rather
+than tokenized (affects the non-default `MD052`/`MD054` shortcut options), and
+`MD007` does not model the blockquote-indent adjustment. Everything exercised
+by the parity corpus matches exactly.
 
 fastmdlint is written in 100% safe Rust (`#![forbid(unsafe_code)]`).
 
@@ -102,8 +110,9 @@ CONFIG=tests/only-implemented.json bash tests/parity.sh tests/corpus
 over a corpus (markdownlint's own rule docs, the CLI's test fixtures, and
 hand-written violation files) and asserts **byte-for-byte identical stdout**,
 identical **JSON** output, identical **`--fix`** results, and identical exit
-codes. Restricting both tools to the implemented rule set, the current corpus
-reports **189/189 comparisons identical**.
+codes, with all 52 rules enabled (the default). The current corpus reports
+**204/204 comparisons identical**, including a dense "kitchen-sink" fixture
+that triggers 20+ rules at once.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for an overview of the code.
 

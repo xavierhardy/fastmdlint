@@ -122,6 +122,44 @@ fn severity_warning_from_config() {
 }
 
 #[test]
+fn md049_emphasis_style_consistent() {
+    let md = "# T\n\nUse *a* and _b_ here.\n";
+    let out = run_text(md, json!({ "default": false, "MD049": true }));
+    assert!(out.contains("MD049/emphasis-style"), "{out}");
+    assert!(out.contains("[Expected: asterisk; Actual: underscore]"), "{out}");
+}
+
+#[test]
+fn md055_table_pipe_style() {
+    let md = "# T\n\n| a | b |\n| - | - |\n| 1 | 2 |\nno pipe | here\n";
+    let out = run_text(md, json!({ "default": false, "MD055": true }));
+    assert!(out.contains("MD055/table-pipe-style"), "{out}");
+}
+
+#[test]
+fn md033_inline_html() {
+    let md = "# T\n\nA <span>tag</span> here.\n";
+    let out = run_text(md, json!({ "default": false, "MD033": true }));
+    assert!(out.contains("MD033/no-inline-html"), "{out}");
+    assert!(out.contains("[Element: span]"), "{out}");
+}
+
+#[test]
+fn md052_undefined_reference() {
+    let md = "# T\n\nA [text][missing] link.\n";
+    let out = run_text(md, json!({ "default": false, "MD052": true }));
+    assert!(out.contains("MD052/reference-links-images"), "{out}");
+    assert!(out.contains("\"missing\""), "{out}");
+}
+
+#[test]
+fn md027_blockquote_extra_space() {
+    let md = "# T\n\n> ok\n>   extra\n";
+    let out = run_text(md, json!({ "default": false, "MD027": true }));
+    assert!(out.contains("MD027/no-multiple-space-blockquote"), "{out}");
+}
+
+#[test]
 fn front_matter_offsets_line_numbers() {
     let md = "---\ntitle: Test\n---\n\n#Heading\n";
     let out = run_text(md, json!({ "default": false, "MD018": true }));

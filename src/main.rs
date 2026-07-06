@@ -15,7 +15,6 @@ use serde_json::{Map, Value};
 
 use fastmdlint::config::{deep_merge, Config};
 use fastmdlint::fix::{fix_content, unified_diff};
-use fastmdlint::linter::lint;
 use fastmdlint::output::{FileReport, OutputFormat};
 use fastmdlint::runner::{expand_inputs, lint_files, FileEntry};
 use fastmdlint::Severity;
@@ -155,7 +154,6 @@ fn main() -> ExitCode {
     }
     let mut config = Config::from_value(config_value);
     config.apply_enable_disable(&cli.enable, &cli.disable);
-    let resolved = config.resolve();
 
     let format = if cli.json {
         OutputFormat::Json
@@ -169,7 +167,7 @@ fn main() -> ExitCode {
         if std::io::stdin().read_to_string(&mut buf).is_err() {
             return ExitCode::from(EXIT_UNEXPECTED);
         }
-        let errors = lint(&buf, &resolved);
+        let errors = fastmdlint::linter::lint_config(&buf, &config);
         let reports = vec![FileReport {
             file: "stdin",
             errors: &errors,
@@ -194,7 +192,7 @@ fn main() -> ExitCode {
                 Ok(c) => c,
                 Err(_) => continue,
             };
-            let result = fix_content(&content, &resolved);
+            let result = fix_content(&content, &config);
             if result.changed {
                 if cli.dry_run {
                     print!("{}", unified_diff(&entry.original, &content, &result.fixed));
@@ -209,7 +207,7 @@ fn main() -> ExitCode {
     }
 
     // Lint and report.
-    let results = lint_files(&entries, &resolved, cli.jobs);
+    let results = lint_files(&entries, &config, cli.jobs);
     for r in &results {
         if let Some(err) = &r.io_error {
             eprintln!("{err}");

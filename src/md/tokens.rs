@@ -53,6 +53,17 @@ impl Tree {
             .collect()
     }
 
+    /// Like [`Tree::filter_idx`] but also includes tokens inside `htmlFlow`
+    /// (matching `filterByTypes(tokens, types, true)`).
+    pub fn filter_idx_html(&self, kinds: &[&str]) -> Vec<usize> {
+        self.tokens
+            .iter()
+            .enumerate()
+            .filter(|(_, t)| kinds.contains(&t.kind))
+            .map(|(i, _)| i)
+            .collect()
+    }
+
     /// Direct children of a token filtered by kind.
     pub fn children_of(&self, idx: usize, kinds: &[&str]) -> Vec<usize> {
         self.tokens[idx]

@@ -4,8 +4,8 @@ use std::path::{Path, PathBuf};
 
 use rayon::prelude::*;
 
-use crate::config::ResolvedConfig;
-use crate::linter::{lint, LintError};
+use crate::config::Config;
+use crate::linter::{lint_config, LintError};
 
 /// A discovered input file.
 #[derive(Clone)]
@@ -108,11 +108,11 @@ pub struct FileResult {
     pub io_error: Option<String>,
 }
 
-fn lint_one(entry: &FileEntry, cfg: &ResolvedConfig) -> FileResult {
+fn lint_one(entry: &FileEntry, cfg: &Config) -> FileResult {
     match std::fs::read_to_string(&entry.path) {
         Ok(content) => FileResult {
             original: entry.original.clone(),
-            errors: lint(&content, cfg),
+            errors: lint_config(&content, cfg),
             io_error: None,
         },
         Err(e) => FileResult {
@@ -124,7 +124,7 @@ fn lint_one(entry: &FileEntry, cfg: &ResolvedConfig) -> FileResult {
 }
 
 /// Lint files, in parallel when there is more than one.
-pub fn lint_files(files: &[FileEntry], cfg: &ResolvedConfig, jobs: Option<usize>) -> Vec<FileResult> {
+pub fn lint_files(files: &[FileEntry], cfg: &Config, jobs: Option<usize>) -> Vec<FileResult> {
     let run = || files.par_iter().map(|f| lint_one(f, cfg)).collect::<Vec<_>>();
     match jobs {
         _ if files.len() <= 1 => files.iter().map(|f| lint_one(f, cfg)).collect(),

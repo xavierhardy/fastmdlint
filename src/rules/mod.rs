@@ -10,11 +10,14 @@ use serde_json::Value;
 use crate::md::Tree;
 
 pub mod helpers;
+pub mod refdata;
 
 // Rule implementation modules.
 mod md001;
 mod md003;
 mod md004;
+mod md005;
+mod md007;
 mod md009;
 mod md010;
 mod md011;
@@ -23,14 +26,39 @@ mod md013;
 mod md014;
 mod md018;
 mod md019;
+mod md020;
 mod md022;
 mod md023;
 mod md024;
 mod md025;
 mod md026;
+mod md027;
+mod md028;
+mod md029;
+mod md030;
 mod md031;
 mod md032;
+mod md033;
+mod md034;
 mod md035;
+mod md036;
+mod md037;
+mod md038;
+mod md039;
+mod md049;
+mod md051;
+mod md052;
+mod md053;
+mod md054;
+mod md042;
+mod md043;
+mod md044;
+mod md045;
+mod md055;
+mod md056;
+mod md058;
+mod md059;
+mod md060;
 mod md040;
 mod md041;
 mod md046;
@@ -189,6 +217,8 @@ pub const RULES: &[RuleMeta] = &[
     md001::RULE,
     md003::RULE,
     md004::RULE,
+    md005::RULE,
+    md007::RULE,
     md009::RULE,
     md010::RULE,
     md011::RULE,
@@ -197,15 +227,41 @@ pub const RULES: &[RuleMeta] = &[
     md014::RULE,
     md018::RULE,
     md019::MD019,
+    md020::RULE,
     md019::MD021,
     md022::RULE,
     md023::RULE,
     md024::RULE,
     md025::RULE,
     md026::RULE,
+    md027::RULE,
+    md028::RULE,
+    md029::RULE,
+    md030::RULE,
     md031::RULE,
     md032::RULE,
+    md033::RULE,
+    md034::RULE,
     md035::RULE,
+    md036::RULE,
+    md037::RULE,
+    md038::RULE,
+    md039::RULE,
+    md049::MD049,
+    md049::MD050,
+    md051::RULE,
+    md052::RULE,
+    md053::RULE,
+    md054::RULE,
+    md042::RULE,
+    md043::RULE,
+    md044::RULE,
+    md045::RULE,
+    md055::RULE,
+    md056::RULE,
+    md058::RULE,
+    md059::RULE,
+    md060::RULE,
     md040::RULE,
     md041::RULE,
     md046::RULE,
