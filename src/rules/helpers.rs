@@ -109,10 +109,26 @@ impl ConfigExt for Value {
 /// True when the front matter contains a title (used by MD001/MD025/MD041).
 /// Mirrors `frontMatterHasTitle`. Default pattern: `^\s*"?title"?\s*[:=]`.
 pub fn front_matter_has_title(front_matter_lines: &[String], pattern: Option<&str>) -> bool {
-    let re_src = pattern.unwrap_or(r#"^\s*"?title"?\s*[:=]"#);
-    let re = match regex::Regex::new(&format!("(?i){re_src}")) {
-        Ok(r) => r,
-        Err(_) => return false,
+    if front_matter_lines.is_empty() {
+        return false;
+    }
+    // The default pattern regex is compiled once; a custom pattern compiles
+    // per call.
+    let default_re = || -> &'static regex::Regex {
+        use std::sync::OnceLock;
+        static RE: OnceLock<regex::Regex> = OnceLock::new();
+        RE.get_or_init(|| regex::Regex::new(r#"(?i)^\s*"?title"?\s*[:=]"#).unwrap())
+    };
+    let custom;
+    let re: &regex::Regex = match pattern {
+        None => default_re(),
+        Some(p) => {
+            custom = match regex::Regex::new(&format!("(?i){p}")) {
+                Ok(r) => r,
+                Err(_) => return false,
+            };
+            &custom
+        }
     };
     front_matter_lines.iter().any(|l| re.is_match(l))
 }

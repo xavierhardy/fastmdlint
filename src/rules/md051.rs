@@ -67,17 +67,36 @@ fn heading_to_fragment(tree: &Tree, heading_text: usize) -> String {
     format!("#{}", encode_uri_component(&dashed))
 }
 
-fn attr_re(name: &str) -> Regex {
-    Regex::new(&format!(r#"(?i)\s{name}\s*=\s*['"]?([^'"\s>]*)"#)).unwrap()
+fn id_re() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r#"(?i)\sid\s*=\s*['"]?([^'"\s>]*)"#).unwrap())
+}
+
+fn name_re() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r#"(?i)\sname\s*=\s*['"]?([^'"\s>]*)"#).unwrap())
+}
+
+fn line_fragment_re() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"^#(?:L\d+(?:C\d+)?-L\d+(?:C\d+)?|L\d+)$").unwrap())
+}
+
+fn anchor_re() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"\{(#[a-z\d]+(?:[-_][a-z\d]+)*)\}").unwrap())
 }
 
 fn run(params: &Params, emit: &mut Emit) {
     let ignore_case = params.config.opt_bool("ignore_case", false);
     let ignored_pattern = params.config.opt_str("ignored_pattern").unwrap_or("");
-    let ignored_re = Regex::new(if ignored_pattern.is_empty() { "^$" } else { ignored_pattern }).ok();
-    let line_fragment_re =
-        Regex::new(r"^#(?:L\d+(?:C\d+)?-L\d+(?:C\d+)?|L\d+)$").unwrap();
-    let anchor_re = Regex::new(r"\{(#[a-z\d]+(?:[-_][a-z\d]+)*)\}").unwrap();
+    let ignored_re = if ignored_pattern.is_empty() {
+        None
+    } else {
+        Regex::new(ignored_pattern).ok()
+    };
+    let line_fragment_re = line_fragment_re();
+    let anchor_re = anchor_re();
     let tree = params.tree;
 
     let mut fragments: HashMap<String, usize> = HashMap::new();
@@ -98,8 +117,8 @@ fn run(params: &Params, emit: &mut Emit) {
         }
     }
 
-    let id_re = attr_re("id");
-    let name_re = attr_re("name");
+    let id_re = id_re();
+    let name_re = name_re();
     for &t in &tree.filter_idx_html(&["htmlText"]) {
         let tok = tree.get(t);
         if let Some(info) = html_tag_info(&tok.text) {

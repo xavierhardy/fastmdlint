@@ -97,3 +97,5 @@ writing. This produces byte-identical results to `markdownlint --fix`.
 - `tests/lint_test.rs`: pure-Rust integration tests asserting exact output for
   known cases (captured from the reference), config resolution, inline
   directives, severity and front-matter offsetting.
+- `bench/bench.sh`: speed comparison against markdownlint-cli (single small
+  file, single large file, many files).

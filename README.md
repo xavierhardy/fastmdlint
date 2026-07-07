@@ -11,7 +11,9 @@ match markdownlint-cli **byte for byte** for the implemented rules (verified by
 a side-by-side parity harness against the real tool). On top of that,
 fastmdlint adds:
 
-- **Speed**: native Rust with parallel processing of multiple files.
+- **Speed**: typically 5–12× faster than markdownlint-cli (see
+  [Performance](#performance)), with parallel processing of multiple files
+  (configurable with `--jobs`).
 - **Auto-fix** (`--fix`): applies markdownlint's fixes with the same
   `applyFixes` algorithm, producing byte-identical results.
 - **Dry-run** (`--dry-run`): shows a unified diff of what `--fix` would change
@@ -106,7 +108,10 @@ cargo test
 
 # Side-by-side parity against the real markdownlint-cli
 #   (expects it at ~/tmp/markdownlint-cli/markdownlint.js)
-CONFIG=tests/only-implemented.json bash tests/parity.sh tests/corpus
+bash tests/parity.sh tests/corpus
+
+# Benchmarks vs markdownlint-cli
+bash bench/bench.sh
 ```
 
 ## Verified parity with markdownlint-cli
@@ -116,10 +121,28 @@ over a corpus (markdownlint's own rule docs, the CLI's test fixtures, and
 hand-written violation files) and asserts **byte-for-byte identical stdout**,
 identical **JSON** output, identical **`--fix`** results, and identical exit
 codes, with all 52 rules enabled (the default). The current corpus reports
-**204/204 comparisons identical**, including a dense "kitchen-sink" fixture
+**213/213 comparisons identical**, including a dense "kitchen-sink" fixture
 that triggers 20+ rules at once.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for an overview of the code.
+
+## Performance
+
+`bench/bench.sh` compares both tools on the same inputs with the default
+configuration (all 52 rules). Representative results (Apple M1 Pro,
+markdownlint-cli 0.49.0 on Node.js v22, average of 5 runs including process
+startup):
+
+| scenario                      | markdownlint-cli | fastmdlint | speedup |
+|-------------------------------|------------------|------------|---------|
+| single small file (18 lines)  | 301.0 ms         | 24.2 ms    | ~12×    |
+| single large file (11.5k lines) | 1051.7 ms      | 117.2 ms   | ~9×     |
+| many files (400 files)        | 1303.2 ms        | 254.9 ms   | ~5×     |
+
+The small-file case is dominated by process startup on both sides (Node.js
+startup and module loading vs. a native binary); the large-file case reflects
+raw linting throughput; and the many-files case additionally benefits from
+parallel processing (configurable with `--jobs`).
 
 ## License and acknowledgements
 
