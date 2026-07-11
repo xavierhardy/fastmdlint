@@ -5,7 +5,7 @@ edition = "2024"
 description = "A fast, drop-in replacement for markdownlint-cli written in Rust"
 license = "MIT"
 authors = ["fastmdlint Contributors"]
-repository = "https://github.com/xhardy/fastmdlint"
+repository = "https://github.com/xavierhardy/fastmdlint"
 keywords = ["linter", "markdown", "markdownlint", "lint", "formatter"]
 categories = ["development-tools", "command-line-utilities"]
 

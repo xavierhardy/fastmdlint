@@ -3,7 +3,7 @@
 Genuine improvement areas identified by a codebase review, implemented one by
 one (one commit each).
 
-- [ ] **Fix repository URL in Cargo.toml** — points to
+- [x] **Fix repository URL in Cargo.toml** — points to
   `https://github.com/xhardy/fastmdlint`; the actual repository is
   `https://github.com/xavierhardy/fastmdlint`.
 - [ ] **Correct the rule count in README.md** — the text says "all 52" rules in
