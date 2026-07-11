@@ -67,7 +67,7 @@ fastmdlint reads the same configuration as markdownlint-cli:
 
 ## Rule coverage
 
-fastmdlint implements **all 52** of markdownlint's rules at byte-for-byte
+fastmdlint implements **all 53** of markdownlint's rules at byte-for-byte
 parity:
 
 `MD001` `MD003` `MD004` `MD005` `MD007` `MD009` `MD010` `MD011` `MD012`
@@ -120,7 +120,7 @@ bash bench/bench.sh
 over a corpus (markdownlint's own rule docs, the CLI's test fixtures, and
 hand-written violation files) and asserts **byte-for-byte identical stdout**,
 identical **JSON** output, identical **`--fix`** results, and identical exit
-codes, with all 52 rules enabled (the default). The current corpus reports
+codes, with all 53 rules enabled (the default). The current corpus reports
 **213/213 comparisons identical**, including a dense "kitchen-sink" fixture
 that triggers 20+ rules at once.
 
@@ -129,7 +129,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for an overview of the code.
 ## Performance
 
 `bench/bench.sh` compares both tools on the same inputs with the default
-configuration (all 52 rules). Representative results (Apple M1 Pro,
+configuration (all 53 rules). Representative results (Apple M1 Pro,
 markdownlint-cli 0.49.0 on Node.js v22, average of 5 runs including process
 startup):
 

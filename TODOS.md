@@ -6,7 +6,7 @@ one (one commit each).
 - [x] **Fix repository URL in Cargo.toml** — points to
   `https://github.com/xhardy/fastmdlint`; the actual repository is
   `https://github.com/xavierhardy/fastmdlint`.
-- [ ] **Correct the rule count in README.md** — the text says "all 52" rules in
+- [x] **Correct the rule count in README.md** — the text says "all 52" rules in
   three places, but the registry (`src/rules/mod.rs`) and README's own rule
   list both contain 53 rules.
 - [ ] **Format the codebase with `cargo fmt`** — `cargo fmt --check` currently
