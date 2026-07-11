@@ -1635,11 +1635,8 @@ impl Parser {
             let mut moved = true;
             while moved {
                 moved = false;
-                if let Some(f) = frames.last()
-                    && f.close_start == i
-                {
+                if let Some(f) = frames.pop_if(|f| f.close_start == i) {
                     self.flush_data(data_start, i, chars, line_no, start_col, cur);
-                    let f = frames.pop().unwrap();
                     // closing sequence under the emphasis token
                     let seq = self.tok(
                         f.close_kind,

@@ -31,17 +31,13 @@ fn run(params: &Params, emit: &mut Emit) {
             "listUnordered" => {
                 let mut nesting: i64 = 0;
                 let mut current = token;
-                loop {
-                    let Some(p) = tree
-                        .parent_of_type(current, &["blockQuote", "listOrdered", "listUnordered"])
-                    else {
-                        break;
-                    };
+                while let Some(p) =
+                    tree.parent_of_type(current, &["blockQuote", "listOrdered", "listUnordered"])
+                {
                     match tree.get(p).kind {
                         "listUnordered" => {
                             nesting += 1;
                             current = p;
-                            continue;
                         }
                         "listOrdered" => {
                             nesting = -1;
