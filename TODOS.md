@@ -11,7 +11,7 @@ one (one commit each).
   list both contain 53 rules.
 - [x] **Format the codebase with `cargo fmt`** — `cargo fmt --check` currently
   reports diffs in several files.
-- [ ] **Fix clippy warnings** — `cargo clippy --all-targets` reports 50
+- [x] **Fix clippy warnings** — `cargo clippy --all-targets` reports 50
   warnings (collapsible ifs, `is_multiple_of`, `while let` loops, etc.). Apply
   the mechanical fixes; where a warning flags branch structure that
   deliberately mirrors the upstream markdownlint code, keep the structure and

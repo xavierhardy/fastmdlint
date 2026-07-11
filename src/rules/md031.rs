@@ -18,7 +18,7 @@ fn prefix_re() -> &'static Regex {
     RE.get_or_init(|| Regex::new(r"^(.*?)[`~]").unwrap())
 }
 
-fn line_or_empty<'a>(lines: &'a [String], idx: isize) -> &'a str {
+fn line_or_empty(lines: &[String], idx: isize) -> &str {
     if idx >= 0 && (idx as usize) < lines.len() {
         &lines[idx as usize]
     } else {

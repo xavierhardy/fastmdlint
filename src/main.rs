@@ -257,18 +257,18 @@ fn apply_ignores(cli: &Cli, entries: &mut Vec<FileEntry>) {
         let def = PathBuf::from(".markdownlintignore");
         if def.is_file() { Some(def) } else { None }
     });
-    if let Some(path) = ignore_file {
-        if let Ok(text) = std::fs::read_to_string(&path) {
-            let mut builder = ignore::gitignore::GitignoreBuilder::new(".");
-            for line in text.lines() {
-                let _ = builder.add_line(None, line);
-            }
-            if let Ok(gi) = builder.build() {
-                entries.retain(|e| {
-                    let rel = e.path.strip_prefix("./").unwrap_or(&e.path);
-                    !gi.matched(rel, rel.is_dir()).is_ignore()
-                });
-            }
+    if let Some(path) = ignore_file
+        && let Ok(text) = std::fs::read_to_string(&path)
+    {
+        let mut builder = ignore::gitignore::GitignoreBuilder::new(".");
+        for line in text.lines() {
+            let _ = builder.add_line(None, line);
+        }
+        if let Ok(gi) = builder.build() {
+            entries.retain(|e| {
+                let rel = e.path.strip_prefix("./").unwrap_or(&e.path);
+                !gi.matched(rel, rel.is_dir()).is_ignore()
+            });
         }
     }
     // -i ignore globs / paths.
@@ -285,7 +285,7 @@ fn apply_ignores(cli: &Cli, entries: &mut Vec<FileEntry>) {
             .collect();
         entries.retain(|e| {
             let canon = std::fs::canonicalize(&e.path).unwrap_or_else(|_| e.path.clone());
-            if literal.iter().any(|l| *l == canon) {
+            if literal.contains(&canon) {
                 return false;
             }
             let s = e.original.clone();

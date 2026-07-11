@@ -25,7 +25,7 @@ fn single_line_definition(line: &str) -> bool {
         static RE: OnceLock<Regex> = OnceLock::new();
         RE.get_or_init(|| Regex::new(r"^ {0,3}\[([^\]]*[^\\])\]:").unwrap())
     };
-    re.replace(line, "").trim().len() > 0
+    !re.replace(line, "").trim().is_empty()
 }
 
 fn run(params: &Params, emit: &mut Emit) {

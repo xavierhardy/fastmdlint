@@ -3,6 +3,7 @@
 //! to other reference rules).
 
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 
 use crate::md::Tree;
 use regex::Regex;
@@ -90,10 +91,11 @@ pub fn definition_lines(tree: &Tree) -> (HashMap<String, usize>, Vec<(String, us
         let t = tree.get(d);
         if let Some(c) = re.captures(&t.text) {
             let label = normalize(c.get(1).map(|m| m.as_str()).unwrap_or(""));
-            if map.contains_key(&label) {
-                dups.push((label, t.start_line - 1));
-            } else {
-                map.insert(label, t.start_line - 1);
+            match map.entry(label) {
+                Entry::Occupied(e) => dups.push((e.key().clone(), t.start_line - 1)),
+                Entry::Vacant(e) => {
+                    e.insert(t.start_line - 1);
+                }
             }
         }
     }

@@ -44,10 +44,12 @@ fn run(params: &Params, emit: &mut Emit) {
         }
         for &child in &tree.get(token).children {
             let ct = tree.get(child);
-            if ct.kind == "data" && ct.text.chars().count() <= 3 && !ct.in_html_flow {
-                if let Some(v) = by_marker.get_mut(ct.text.as_str()) {
-                    v.push(child);
-                }
+            if ct.kind == "data"
+                && ct.text.chars().count() <= 3
+                && !ct.in_html_flow
+                && let Some(v) = by_marker.get_mut(ct.text.as_str())
+            {
+                v.push(child);
             }
         }
         for m in MARKERS {

@@ -95,9 +95,8 @@ fn run(params: &Params, emit: &mut Emit) {
     if !has_error
         && (extra > 1 || (extra == 1 && required.get(i).map(|s| s != "*").unwrap_or(false)))
         && (any_headings || !required.iter().all(|h| h == "*"))
+        && let Some(ctx) = required.get(i)
     {
-        if let Some(ctx) = required.get(i) {
-            emit.add_context(params.lines.len(), ctx, false, false, None, None);
-        }
+        emit.add_context(params.lines.len(), ctx, false, false, None, None);
     }
 }

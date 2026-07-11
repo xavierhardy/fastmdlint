@@ -1,7 +1,7 @@
 //! Automatic character-encoding detection (BOM-based, UTF-8/16/32).
 
 fn decode_utf16(data: &[u8], big_endian: bool) -> Result<String, String> {
-    if data.len() % 2 != 0 {
+    if !data.len().is_multiple_of(2) {
         return Err("truncated UTF-16 data".to_string());
     }
     let units: Vec<u16> = data
@@ -18,7 +18,7 @@ fn decode_utf16(data: &[u8], big_endian: bool) -> Result<String, String> {
 }
 
 fn decode_utf32(data: &[u8], big_endian: bool) -> Result<String, String> {
-    if data.len() % 4 != 0 {
+    if !data.len().is_multiple_of(4) {
         return Err("truncated UTF-32 data".to_string());
     }
     data.chunks_exact(4)

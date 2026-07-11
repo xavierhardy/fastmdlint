@@ -105,6 +105,8 @@ fn run(params: &Params, emit: &mut Emit) {
             trailing_word_re().replace(line, "#").chars().count()
         };
         let line_len = line.chars().count();
+        // Condition kept in upstream's shape rather than clippy's minimal form.
+        #[allow(clippy::nonminimal_bool)]
         if max_length > 0
             && (include_code || !in_code)
             && (include_tables || !in_table)

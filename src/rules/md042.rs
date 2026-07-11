@@ -42,6 +42,9 @@ fn run(params: &Params, emit: &mut Emit) {
         let has_reference_string = !reference_string.is_empty();
         let has_resource_dest_string = !resource_dest_string.is_empty();
 
+        // The two `false` branches are distinct cases upstream; keep them
+        // separate to preserve the mapping.
+        #[allow(clippy::if_same_then_else)]
         let error = if has_label_text
             && ((!has_reference && !has_resource) || (has_reference && !has_reference_string))
         {

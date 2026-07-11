@@ -60,16 +60,16 @@ pub fn split_lines(content: &str) -> Vec<String> {
 
 /// Remove YAML/TOML front matter; returns (stripped content, front matter lines).
 fn remove_front_matter(content: &str) -> (String, Vec<String>) {
-    if let Some(m) = front_matter_re().find(content) {
-        if m.start() == 0 {
-            let matched = &content[..m.end()];
-            let stripped = content[m.end()..].to_string();
-            let mut fm: Vec<String> = split_lines(matched);
-            if fm.last().map(|s| s.is_empty()).unwrap_or(false) {
-                fm.pop();
-            }
-            return (stripped, fm);
+    if let Some(m) = front_matter_re().find(content)
+        && m.start() == 0
+    {
+        let matched = &content[..m.end()];
+        let stripped = content[m.end()..].to_string();
+        let mut fm: Vec<String> = split_lines(matched);
+        if fm.last().map(|s| s.is_empty()).unwrap_or(false) {
+            fm.pop();
         }
+        return (stripped, fm);
     }
     (content.to_string(), Vec::new())
 }
@@ -80,11 +80,8 @@ pub fn clear_html_comment_text(text: &str) -> String {
     let end = "-->";
     let mut bytes = text.to_string();
     let mut search_from = 0usize;
-    loop {
-        let i = match bytes[search_from..].find(begin) {
-            Some(p) => search_from + p,
-            None => break,
-        };
+    while let Some(p) = bytes[search_from..].find(begin) {
+        let i = search_from + p;
         let j = match bytes[i + 2..].find(end) {
             Some(p) => i + 2 + p,
             None => break, // unterminated => treated as text
@@ -236,11 +233,11 @@ fn apply_configure_file(mut raw: serde_json::Value, content: &str) -> serde_json
         let start = caps.get(1).unwrap().end();
         if let Some(rel) = content[start..].find("-->") {
             let param = content[start..start + rel].trim();
-            if let Ok(parsed) = crate::config::parse_config_content(param) {
-                if let (Some(base), Some(over)) = (raw.as_object_mut(), parsed.as_object()) {
-                    for (k, v) in over {
-                        base.insert(k.clone(), v.clone());
-                    }
+            if let Ok(parsed) = crate::config::parse_config_content(param)
+                && let (Some(base), Some(over)) = (raw.as_object_mut(), parsed.as_object())
+            {
+                for (k, v) in over {
+                    base.insert(k.clone(), v.clone());
                 }
             }
         }

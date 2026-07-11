@@ -120,13 +120,14 @@ impl Parser {
             }
             // GFM table: header row followed by a delimiter row with the same
             // number of columns.
-            if i + 1 < n && chars.iter().any(|c| *c == '|') {
-                if let Some(dcount) = delimiter_row_cells(&self.lines[i + 1].chars) {
-                    if count_cells(chars) == dcount && dcount > 0 {
-                        i = self.parse_table(i);
-                        continue;
-                    }
-                }
+            if i + 1 < n
+                && chars.contains(&'|')
+                && let Some(dcount) = delimiter_row_cells(&self.lines[i + 1].chars)
+                && count_cells(chars) == dcount
+                && dcount > 0
+            {
+                i = self.parse_table(i);
+                continue;
             }
             // Paragraph (may become a setext heading).
             i = self.parse_paragraph(i, None);
@@ -366,24 +367,25 @@ impl Parser {
         let lead = leading_spaces(&chars);
         let sl = start + 1;
         // find closing fence
-        let end_line;
+
         let mut closed_at: Option<usize> = None;
         let mut j = start + 1;
         while j < self.lines.len() {
             let lc = &self.lines[j].chars;
             let jl = leading_spaces(lc);
             let jt: String = lc.iter().skip(jl).collect();
-            if jl < 4 {
-                if let Some((c, l)) = fenced_fence(&jt) {
-                    if c == fence_char && l >= fence_len && only_fence(&jt, fence_char) {
-                        closed_at = Some(j);
-                        break;
-                    }
-                }
+            if jl < 4
+                && let Some((c, l)) = fenced_fence(&jt)
+                && c == fence_char
+                && l >= fence_len
+                && only_fence(&jt, fence_char)
+            {
+                closed_at = Some(j);
+                break;
             }
             j += 1;
         }
-        end_line = closed_at.unwrap_or(self.lines.len() - 1);
+        let end_line = closed_at.unwrap_or(self.lines.len() - 1);
         let last_len = self.line_len(end_line);
         let cf = self.tok(
             "codeFenced",
@@ -1152,7 +1154,7 @@ impl Parser {
                     let same_sig = list_marker(&kt)
                         .map(|(o, m, _)| (o, m) == first_sig)
                         .unwrap_or(false);
-                    ki >= cur_content_col || (ki >= min_indent && ki < cur_content_col && same_sig)
+                    ki >= cur_content_col || (ki >= min_indent && same_sig)
                 } else {
                     false
                 };
@@ -1384,12 +1386,13 @@ impl Parser {
                     break;
                 }
                 // A table (header + delimiter row) interrupts a paragraph.
-                if lc.iter().any(|c| *c == '|') && j + 1 < self.lines.len() {
-                    if let Some(dc) = delimiter_row_cells(&self.lines[j + 1].chars) {
-                        if count_cells(lc) == dc && dc > 0 {
-                            break;
-                        }
-                    }
+                if lc.contains(&'|')
+                    && j + 1 < self.lines.len()
+                    && let Some(dc) = delimiter_row_cells(&self.lines[j + 1].chars)
+                    && count_cells(lc) == dc
+                    && dc > 0
+                {
+                    break;
                 }
             }
             j += 1;
@@ -1563,26 +1566,26 @@ impl Parser {
                     continue;
                 }
             }
-            if c == '<' {
-                if let Some(end) = detect_autolink(chars, i).or_else(|| detect_html(chars, i)) {
-                    ranges.push((i, end));
-                    i = end;
-                    continue;
-                }
+            if c == '<'
+                && let Some(end) = detect_autolink(chars, i).or_else(|| detect_html(chars, i))
+            {
+                ranges.push((i, end));
+                i = end;
+                continue;
             }
-            if c == '[' || (c == '!' && chars.get(i + 1) == Some(&'[')) {
-                if let Some(end) = detect_link(chars, i) {
-                    ranges.push((i, end));
-                    i = end;
-                    continue;
-                }
+            if (c == '[' || (c == '!' && chars.get(i + 1) == Some(&'[')))
+                && let Some(end) = detect_link(chars, i)
+            {
+                ranges.push((i, end));
+                i = end;
+                continue;
             }
-            if is_url_boundary(chars, i) {
-                if let Some(end) = detect_literal(chars, i) {
-                    ranges.push((i, end));
-                    i = end;
-                    continue;
-                }
+            if is_url_boundary(chars, i)
+                && let Some(end) = detect_literal(chars, i)
+            {
+                ranges.push((i, end));
+                i = end;
+                continue;
             }
             i += 1;
         }
@@ -1632,29 +1635,29 @@ impl Parser {
             let mut moved = true;
             while moved {
                 moved = false;
-                if let Some(f) = frames.last() {
-                    if f.close_start == i {
-                        self.flush_data(data_start, i, chars, line_no, start_col, cur);
-                        let f = frames.pop().unwrap();
-                        // closing sequence under the emphasis token
-                        let seq = self.tok(
-                            f.close_kind,
-                            line_no,
-                            start_col + i,
-                            line_no,
-                            start_col + i + f.close_len,
-                            chars[i..i + f.close_len].iter().collect(),
-                        );
-                        self.push(seq, Some(f.emph_idx));
-                        i += f.close_len;
-                        data_start = i;
-                        cur = frames
-                            .last()
-                            .map(|fr| self.tree.tokens[fr.emph_idx].children[1])
-                            .unwrap_or(parent);
-                        moved = true;
-                        continue;
-                    }
+                if let Some(f) = frames.last()
+                    && f.close_start == i
+                {
+                    self.flush_data(data_start, i, chars, line_no, start_col, cur);
+                    let f = frames.pop().unwrap();
+                    // closing sequence under the emphasis token
+                    let seq = self.tok(
+                        f.close_kind,
+                        line_no,
+                        start_col + i,
+                        line_no,
+                        start_col + i + f.close_len,
+                        chars[i..i + f.close_len].iter().collect(),
+                    );
+                    self.push(seq, Some(f.emph_idx));
+                    i += f.close_len;
+                    data_start = i;
+                    cur = frames
+                        .last()
+                        .map(|fr| self.tree.tokens[fr.emph_idx].children[1])
+                        .unwrap_or(parent);
+                    moved = true;
+                    continue;
                 }
                 while op < opens.len() && opens[op].open_start < i {
                     op += 1;
@@ -1737,13 +1740,12 @@ impl Parser {
                 i = run_end;
                 continue;
             }
-            if c == '`' {
-                if let Some(end) =
+            if c == '`'
+                && let Some(end) =
                     self.try_code_span(chars, i, line_no, start_col, cur, &mut data_start)
-                {
-                    i = end;
-                    continue;
-                }
+            {
+                i = end;
+                continue;
             }
             if c == '<' {
                 if let Some(end) =
@@ -1774,23 +1776,21 @@ impl Parser {
                     suppressed_link_at = Some(i + 1);
                 }
             }
-            if (c == 'h' || c == 'H' || c == 'w' || c == 'W') && is_url_boundary(chars, i) {
-                if let Some(end) =
+            if (c == 'h' || c == 'H' || c == 'w' || c == 'W')
+                && is_url_boundary(chars, i)
+                && let Some(end) =
                     self.try_literal_autolink(chars, i, line_no, start_col, cur, &mut data_start)
-                {
-                    i = end;
-                    continue;
-                }
+            {
+                i = end;
+                continue;
             }
             if (c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '%' | '+' | '-'))
                 && is_url_boundary(chars, i)
-            {
-                if let Some(end) =
+                && let Some(end) =
                     self.try_literal_email(chars, i, line_no, start_col, cur, &mut data_start)
-                {
-                    i = end;
-                    continue;
-                }
+            {
+                i = end;
+                continue;
             }
             i += 1;
         }
@@ -2098,10 +2098,10 @@ impl Parser {
         let matched: Vec<char> = m.as_str().chars().collect();
         // Must be followed by a non-word boundary.
         let after = chars.get(i + matched.len());
-        if let Some(a) = after {
-            if a.is_alphanumeric() || *a == '@' || *a == '-' {
-                return None;
-            }
+        if let Some(a) = after
+            && (a.is_alphanumeric() || *a == '@' || *a == '-')
+        {
+            return None;
         }
         self.flush_data(*data_start, i, chars, line_no, start_col, parent);
         let end = i + matched.len();
@@ -2647,8 +2647,9 @@ pub fn emphasis_spans(chars: &[char], masked: &[(usize, usize)]) -> Vec<EmphSpan
                 k -= 1;
                 if runs[k].can_open && runs[k].ch == runs[c].ch && runs[k].remaining > 0 {
                     // rule of three
-                    let both_multiple_of_3 = (runs[k].orig % 3 == 0) && (runs[c].orig % 3 == 0);
-                    let sum_multiple_of_3 = (runs[k].orig + runs[c].orig) % 3 == 0;
+                    let both_multiple_of_3 =
+                        runs[k].orig.is_multiple_of(3) && runs[c].orig.is_multiple_of(3);
+                    let sum_multiple_of_3 = (runs[k].orig + runs[c].orig).is_multiple_of(3);
                     let blocked = (runs[c].can_open || runs[k].can_close)
                         && sum_multiple_of_3
                         && !both_multiple_of_3;
@@ -2736,8 +2737,7 @@ fn is_url_boundary(chars: &[char], i: usize) -> bool {
 
 /// GFM trailing-punctuation trimming for literal autolinks.
 fn trim_url_trailing(matched: &mut Vec<char>) {
-    loop {
-        let Some(&last) = matched.last() else { break };
+    while let Some(&last) = matched.last() {
         if matches!(
             last,
             '?' | '!' | '.' | ',' | ':' | '*' | '_' | '~' | ';' | '\'' | '"'
@@ -2920,10 +2920,11 @@ fn list_marker(trimmed: &str) -> Option<(bool, char, usize)> {
         if n > 9 {
             return None;
         }
-        if n < chars.len() && (chars[n] == '.' || chars[n] == ')') {
-            if n + 1 == chars.len() || chars[n + 1] == ' ' || chars[n + 1] == '\t' {
-                return Some((true, chars[n], n + 1));
-            }
+        if n < chars.len()
+            && (chars[n] == '.' || chars[n] == ')')
+            && (n + 1 == chars.len() || chars[n + 1] == ' ' || chars[n + 1] == '\t')
+        {
+            return Some((true, chars[n], n + 1));
         }
     }
     None
@@ -3062,8 +3063,8 @@ fn delimiter_row_cells(lc: &[char]) -> Option<usize> {
 /// blockquote, or `None` if any line lacks a `>` prefix (lazy continuation).
 fn uniform_bq_prefixes(lines: &[Line], start: usize, end: usize) -> Option<Vec<usize>> {
     let mut widths = Vec::new();
-    for k in start..=end {
-        let lc = &lines[k].chars;
+    for line in &lines[start..=end] {
+        let lc = &line.chars;
         let lead = leading_spaces(lc);
         if lead >= 4 || lc.get(lead) != Some(&'>') {
             return None;

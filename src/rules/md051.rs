@@ -128,20 +128,20 @@ fn run(params: &Params, emit: &mut Emit) {
     let name_re = name_re();
     for &t in &tree.filter_idx_html(&["htmlText"]) {
         let tok = tree.get(t);
-        if let Some(info) = html_tag_info(&tok.text) {
-            if !info.close {
-                let m = id_re.captures(&tok.text).or_else(|| {
-                    if info.name.to_lowercase() == "a" {
-                        name_re.captures(&tok.text)
-                    } else {
-                        None
-                    }
-                });
-                if let Some(c) = m {
-                    if let Some(g) = c.get(1) {
-                        fragments.insert(format!("#{}", g.as_str()), 0);
-                    }
+        if let Some(info) = html_tag_info(&tok.text)
+            && !info.close
+        {
+            let m = id_re.captures(&tok.text).or_else(|| {
+                if info.name.to_lowercase() == "a" {
+                    name_re.captures(&tok.text)
+                } else {
+                    None
                 }
+            });
+            if let Some(c) = m
+                && let Some(g) = c.get(1)
+            {
+                fragments.insert(format!("#{}", g.as_str()), 0);
             }
         }
     }

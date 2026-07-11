@@ -107,7 +107,7 @@ fn run(params: &Params, emit: &mut Emit) {
                 }
                 let overlaps = exclusions
                     .iter()
-                    .any(|&(l, s, e)| l == line && s <= column + length - 1 && column <= e);
+                    .any(|&(l, s, e)| l == line && s < column + length && column <= e);
                 if !overlaps {
                     emit.add_detail_if(
                         line,

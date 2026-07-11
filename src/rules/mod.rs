@@ -154,11 +154,11 @@ impl Emit {
     ) {
         if expected != actual {
             let mut d = format!("Expected: {expected}; Actual: {actual}");
-            if let Some(extra) = detail {
-                if !extra.is_empty() {
-                    d.push_str("; ");
-                    d.push_str(extra);
-                }
+            if let Some(extra) = detail
+                && !extra.is_empty()
+            {
+                d.push_str("; ");
+                d.push_str(extra);
             }
             self.add(line_number, Some(d), context, range, fix_info);
         }

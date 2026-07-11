@@ -30,6 +30,10 @@ fn normalize(fi: &FixInfo, line_number: usize) -> Norm {
     }
 }
 
+// The no-line-endings branch duplicates the `lf` branch because upstream
+// returns `os.EOL` there; fastmdlint always uses "\n". Keep upstream's
+// branch order.
+#[allow(clippy::if_same_then_else)]
 fn preferred_line_ending(input: &str) -> &'static str {
     let (mut cr, mut lf, mut crlf) = (0, 0, 0);
     let bytes: Vec<char> = input.chars().collect();
@@ -105,14 +109,13 @@ pub fn apply_fixes(input: &str, fixes: &[(usize, FixInfo)]) -> String {
     // Remove duplicate entries.
     let mut deduped: Vec<Norm> = Vec::new();
     for fi in fix_infos {
-        if let Some(last) = deduped.last() {
-            if last.line_number == fi.line_number
-                && last.edit_column == fi.edit_column
-                && last.delete_count == fi.delete_count
-                && last.insert_text == fi.insert_text
-            {
-                continue;
-            }
+        if let Some(last) = deduped.last()
+            && last.line_number == fi.line_number
+            && last.edit_column == fi.edit_column
+            && last.delete_count == fi.delete_count
+            && last.insert_text == fi.insert_text
+        {
+            continue;
         }
         deduped.push(fi);
     }
@@ -142,16 +145,16 @@ pub fn apply_fixes(input: &str, fixes: &[(usize, FixInfo)]) -> String {
     for fi in &fix_infos {
         let line_index = fi.line_number - 1;
         let edit_index = fi.edit_column - 1;
-        if line_index != last_line_index
+        if (line_index != last_line_index
             || fi.delete_count == -1
             || (edit_index + fi.delete_count)
-                <= (last_edit_index - if fi.delete_count > 0 { 0 } else { 1 })
+                <= (last_edit_index - if fi.delete_count > 0 { 0 } else { 1 }))
+            && line_index >= 0
+            && (line_index as usize) < lines.len()
         {
-            if line_index >= 0 && (line_index as usize) < lines.len() {
-                let idx = line_index as usize;
-                if let Some(cur) = &lines[idx] {
-                    lines[idx] = apply_fix(cur, fi, line_ending);
-                }
+            let idx = line_index as usize;
+            if let Some(cur) = &lines[idx] {
+                lines[idx] = apply_fix(cur, fi, line_ending);
             }
         }
         last_line_index = line_index;

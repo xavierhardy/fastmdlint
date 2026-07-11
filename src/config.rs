@@ -190,15 +190,16 @@ fn interpret_value(value: &Value) -> (bool, Severity, Value) {
 
 /// Parse config content, trying JSONC, then TOML, then YAML.
 pub fn parse_config_content(content: &str) -> Result<Value, String> {
-    if let Ok(v) = parse_jsonc(content) {
-        if v.is_object() {
-            return Ok(v);
-        }
+    if let Ok(v) = parse_jsonc(content)
+        && v.is_object()
+    {
+        return Ok(v);
     }
-    if let Ok(v) = toml::from_str::<Value>(content) {
-        if v.is_object() && v.as_object().map(|o| !o.is_empty()).unwrap_or(false) {
-            return Ok(v);
-        }
+    if let Ok(v) = toml::from_str::<Value>(content)
+        && v.is_object()
+        && v.as_object().map(|o| !o.is_empty()).unwrap_or(false)
+    {
+        return Ok(v);
     }
     match parse_yaml(content) {
         Ok(v) if v.is_object() => Ok(v),
@@ -329,10 +330,10 @@ fn resolve_extends(mut value: Value, path: &Path) -> Result<Value, String> {
 }
 
 fn expand_and_resolve(rel: &str, config_path: &Path) -> std::path::PathBuf {
-    if let Some(stripped) = rel.strip_prefix("~/") {
-        if let Ok(home) = std::env::var("HOME") {
-            return Path::new(&home).join(stripped);
-        }
+    if let Some(stripped) = rel.strip_prefix("~/")
+        && let Ok(home) = std::env::var("HOME")
+    {
+        return Path::new(&home).join(stripped);
     }
     let p = Path::new(rel);
     if p.is_absolute() {

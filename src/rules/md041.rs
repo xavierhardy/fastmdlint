@@ -58,13 +58,13 @@ fn run(params: &Params, emit: &mut Emit) {
             }
             break;
         }
-        if let Some(tag) = html_flow_tag_name(tree, r) {
-            if is_heading_tag(&tag) {
-                if tag != format!("h{level}") {
-                    error_line = t.start_line;
-                }
-                break;
+        if let Some(tag) = html_flow_tag_name(tree, r)
+            && is_heading_tag(&tag)
+        {
+            if tag != format!("h{level}") {
+                error_line = t.start_line;
             }
+            break;
         }
         if !allow_preamble {
             error_line = t.start_line;
