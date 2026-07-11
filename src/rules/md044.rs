@@ -45,7 +45,12 @@ fn run(params: &Params, emit: &mut Emit) {
     let mut names: Vec<String> = params
         .config
         .opt_array("names")
-        .map(|a| a.iter().filter_map(|v| v.as_str()).map(String::from).collect())
+        .map(|a| {
+            a.iter()
+                .filter_map(|v| v.as_str())
+                .map(String::from)
+                .collect()
+        })
         .unwrap_or_default();
     names.sort_by(|a, b| b.len().cmp(&a.len()).then(a.cmp(b)));
     if names.is_empty() {
@@ -63,12 +68,22 @@ fn run(params: &Params, emit: &mut Emit) {
     let mut exclusions: Vec<(usize, usize, usize)> = Vec::new(); // line, scol, ecol
     for name in &names {
         let escaped = regex::escape(name);
-        let start_pat = if name.chars().next().map(|c| !c.is_alphanumeric() && c != '_').unwrap_or(false) {
+        let start_pat = if name
+            .chars()
+            .next()
+            .map(|c| !c.is_alphanumeric() && c != '_')
+            .unwrap_or(false)
+        {
             ""
         } else {
             r"\b_*"
         };
-        let end_pat = if name.chars().last().map(|c| !c.is_alphanumeric() && c != '_').unwrap_or(false) {
+        let end_pat = if name
+            .chars()
+            .last()
+            .map(|c| !c.is_alphanumeric() && c != '_')
+            .unwrap_or(false)
+        {
             ""
         } else {
             r"_*\b"
@@ -90,9 +105,9 @@ fn run(params: &Params, emit: &mut Emit) {
                 if names.iter().any(|n| n == name_match) {
                     continue;
                 }
-                let overlaps = exclusions.iter().any(|&(l, s, e)| {
-                    l == line && s <= column + length - 1 && column <= e
-                });
+                let overlaps = exclusions
+                    .iter()
+                    .any(|&(l, s, e)| l == line && s <= column + length - 1 && column <= e);
                 if !overlaps {
                     emit.add_detail_if(
                         line,

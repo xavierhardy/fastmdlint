@@ -18,7 +18,9 @@ fn run(params: &Params, emit: &mut Emit) {
     let tree = params.tree;
     for &token in &tree.filter_idx(&["linePrefix"]) {
         let parent = tree.get(token).parent;
-        let code_indented = parent.map(|p| tree.get(p).kind == "codeIndented").unwrap_or(false);
+        let code_indented = parent
+            .map(|p| tree.get(p).kind == "codeIndented")
+            .unwrap_or(false);
         if code_indented {
             continue;
         }

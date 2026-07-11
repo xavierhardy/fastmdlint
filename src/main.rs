@@ -13,11 +13,11 @@ use std::process::ExitCode;
 use clap::Parser;
 use serde_json::{Map, Value};
 
-use fastmdlint::config::{deep_merge, Config};
+use fastmdlint::Severity;
+use fastmdlint::config::{Config, deep_merge};
 use fastmdlint::fix::{fix_content, unified_diff};
 use fastmdlint::output::{FileReport, OutputFormat};
-use fastmdlint::runner::{expand_inputs, lint_files, FileEntry};
-use fastmdlint::Severity;
+use fastmdlint::runner::{FileEntry, expand_inputs, lint_files};
 
 // Exit codes (markdownlint-cli).
 const EXIT_LINT_ERRORS: u8 = 1;
@@ -253,13 +253,10 @@ fn finish(cli: &Cli, reports: &[FileReport], format: OutputFormat) -> ExitCode {
 
 fn apply_ignores(cli: &Cli, entries: &mut Vec<FileEntry>) {
     // .markdownlintignore (or -p file) via gitignore semantics.
-    let ignore_file = cli
-        .ignore_path
-        .clone()
-        .or_else(|| {
-            let def = PathBuf::from(".markdownlintignore");
-            if def.is_file() { Some(def) } else { None }
-        });
+    let ignore_file = cli.ignore_path.clone().or_else(|| {
+        let def = PathBuf::from(".markdownlintignore");
+        if def.is_file() { Some(def) } else { None }
+    });
     if let Some(path) = ignore_file {
         if let Ok(text) = std::fs::read_to_string(&path) {
             let mut builder = ignore::gitignore::GitignoreBuilder::new(".");

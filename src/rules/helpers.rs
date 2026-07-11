@@ -91,7 +91,10 @@ impl ConfigExt for Value {
     }
     fn opt_i64(&self, key: &str, default: i64) -> i64 {
         match self.get(key) {
-            Some(v) => v.as_i64().or_else(|| v.as_f64().map(|f| f as i64)).unwrap_or(default),
+            Some(v) => v
+                .as_i64()
+                .or_else(|| v.as_f64().map(|f| f as i64))
+                .unwrap_or(default),
             None => default,
         }
     }

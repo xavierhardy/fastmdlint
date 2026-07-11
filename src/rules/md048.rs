@@ -12,7 +12,11 @@ pub const RULE: RuleMeta = RuleMeta {
 };
 
 fn style_for(text: &str) -> &'static str {
-    if text.starts_with('~') { "tilde" } else { "backtick" }
+    if text.starts_with('~') {
+        "tilde"
+    } else {
+        "backtick"
+    }
 }
 
 fn run(params: &Params, emit: &mut Emit) {
@@ -28,6 +32,14 @@ fn run(params: &Params, emit: &mut Emit) {
         if expected == "consistent" {
             expected = style_for(&tok.text).to_string();
         }
-        emit.add_detail_if(tok.start_line, &expected, style_for(&tok.text), None, None, None, None);
+        emit.add_detail_if(
+            tok.start_line,
+            &expected,
+            style_for(&tok.text),
+            None,
+            None,
+            None,
+            None,
+        );
     }
 }

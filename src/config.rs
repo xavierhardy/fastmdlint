@@ -10,7 +10,7 @@ use std::path::Path;
 
 use serde_json::{Map, Value};
 
-use crate::rules::{RuleMeta, Severity, RULES};
+use crate::rules::{RULES, RuleMeta, Severity};
 
 /// A parsed, merged configuration object.
 #[derive(Debug, Clone)]

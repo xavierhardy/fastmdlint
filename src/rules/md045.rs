@@ -44,13 +44,26 @@ fn run(params: &Params, emit: &mut Emit) {
         if let Some(info) = html_tag_info(&tok.text) {
             if !info.close && info.name.to_lowercase() == "img" {
                 let has_alt = alt_re().is_match(&tok.text);
-                let aria_hidden = aria_hidden_re()
-                    .captures(&tok.text)
-                    .map(|c| c.get(1).map(|m| m.as_str().to_lowercase()).unwrap_or_default())
-                    == Some("true".to_string());
+                let aria_hidden = aria_hidden_re().captures(&tok.text).map(|c| {
+                    c.get(1)
+                        .map(|m| m.as_str().to_lowercase())
+                        .unwrap_or_default()
+                }) == Some("true".to_string());
                 if !has_alt && !aria_hidden {
-                    let len = tok.text.split(['\r', '\n']).next().unwrap_or("").chars().count();
-                    emit.add(tok.start_line, None, None, Some((tok.start_column, len)), None);
+                    let len = tok
+                        .text
+                        .split(['\r', '\n'])
+                        .next()
+                        .unwrap_or("")
+                        .chars()
+                        .count();
+                    emit.add(
+                        tok.start_line,
+                        None,
+                        None,
+                        Some((tok.start_column, len)),
+                        None,
+                    );
                 }
             }
         }

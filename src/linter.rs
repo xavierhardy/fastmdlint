@@ -9,7 +9,7 @@ use std::sync::OnceLock;
 
 use crate::config::ResolvedConfig;
 use crate::md::Parser;
-use crate::rules::{Emit, FixInfo, Params, Severity, RULES};
+use crate::rules::{Emit, FixInfo, Params, RULES, Severity};
 
 /// A fully-resolved problem, ready for output.
 #[derive(Debug, Clone)]
@@ -125,7 +125,13 @@ fn pipe_re() -> &'static Regex {
 fn clear_content(content: &str) -> String {
     let step1: String = content
         .chars()
-        .map(|c| if c == ' ' || c == '\r' || c == '\n' { c } else { '.' })
+        .map(|c| {
+            if c == ' ' || c == '\r' || c == '\n' {
+                c
+            } else {
+                '.'
+            }
+        })
         .collect();
     // trailingSpaceRe: / +[\r\n]/g -> replace spaces with "." keeping the newline
     let re = {
@@ -153,7 +159,12 @@ fn enabled_per_line(
 
     let base: HashMap<&'static str, bool> = RULES
         .iter()
-        .map(|r| (r.names[0], cfg.get(r.names[0]).map(|c| c.enabled).unwrap_or(true)))
+        .map(|r| {
+            (
+                r.names[0],
+                cfg.get(r.names[0]).map(|c| c.enabled).unwrap_or(true),
+            )
+        })
         .collect();
 
     let mut enabled = base.clone();
@@ -194,7 +205,8 @@ fn enabled_per_line(
         for (action, param) in scan_inline(line) {
             let au = action.to_uppercase();
             if au == "DISABLE-LINE" || au == "DISABLE-NEXT-LINE" {
-                let next = fm_len + (line_index + 1) + if au == "DISABLE-NEXT-LINE" { 1 } else { 0 };
+                let next =
+                    fm_len + (line_index + 1) + if au == "DISABLE-NEXT-LINE" { 1 } else { 0 };
                 if next < per_line.len() {
                     let mut state = per_line[next].clone();
                     apply_enable_disable(&mut state, &au, &param, &alias, &all_rule_ids);
@@ -263,7 +275,11 @@ fn apply_enable_disable(
     let items: Vec<String> = if trimmed.is_empty() {
         all_rule_ids.iter().map(|s| s.to_uppercase()).collect()
     } else {
-        trimmed.to_uppercase().split_whitespace().map(String::from).collect()
+        trimmed
+            .to_uppercase()
+            .split_whitespace()
+            .map(String::from)
+            .collect()
     };
     for name in items {
         if let Some(ids) = alias.get(&name) {

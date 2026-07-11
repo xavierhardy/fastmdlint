@@ -48,7 +48,10 @@ fn run(params: &Params, emit: &mut Emit) {
                 .iter()
                 .any(|&c| matches!(tree.get(c).kind, "codeText" | "htmlText"));
             if !has_allowed_child && prohibited.contains(&normalize(&t.text)) {
-                let parent_text = t.parent.map(|p| tree.get(p).text.clone()).unwrap_or_default();
+                let parent_text = t
+                    .parent
+                    .map(|p| tree.get(p).text.clone())
+                    .unwrap_or_default();
                 let range = if t.start_line == t.end_line {
                     Some((t.start_column, t.end_column - t.start_column))
                 } else {

@@ -133,11 +133,12 @@ impl Tree {
 
     /// Heading level for an `atxHeading`/`setextHeading` token.
     pub fn heading_level(&self, heading: usize) -> usize {
-        let seq = self.tokens[heading]
-            .children
-            .iter()
-            .copied()
-            .find(|c| matches!(self.tokens[*c].kind, "atxHeadingSequence" | "setextHeadingLine"));
+        let seq = self.tokens[heading].children.iter().copied().find(|c| {
+            matches!(
+                self.tokens[*c].kind,
+                "atxHeadingSequence" | "setextHeadingLine"
+            )
+        });
         let Some(seq) = seq else { return 1 };
         let text = &self.tokens[seq].text;
         let first = text.chars().next();

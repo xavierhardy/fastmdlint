@@ -1,6 +1,6 @@
 //! MD031 — blanks-around-fences.
 
-use super::helpers::{is_blank_line, ConfigExt};
+use super::helpers::{ConfigExt, is_blank_line};
 use super::{Emit, FixInfo, Params, RuleMeta};
 use regex::Regex;
 use std::sync::OnceLock;
@@ -47,7 +47,9 @@ fn run(params: &Params, emit: &mut Emit) {
     let lines = params.lines;
     let tree = params.tree;
     for &cb in &tree.filter_idx(&["codeFenced"]) {
-        let in_list = tree.parent_of_type(cb, &["listOrdered", "listUnordered"]).is_some();
+        let in_list = tree
+            .parent_of_type(cb, &["listOrdered", "listUnordered"])
+            .is_some();
         if include_list_items || !in_list {
             let start = tree.get(cb).start_line;
             let end = tree.get(cb).end_line;

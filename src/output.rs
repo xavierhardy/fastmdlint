@@ -25,7 +25,10 @@ fn collect<'a>(reports: &'a [FileReport<'a>]) -> Vec<Flat<'a>> {
     let mut v = Vec::new();
     for r in reports {
         for e in r.errors {
-            v.push(Flat { file: r.file, err: e });
+            v.push(Flat {
+                file: r.file,
+                err: e,
+            });
         }
     }
     v
@@ -103,7 +106,12 @@ fn json_entry(file: &str, err: &LintError) -> Value {
     m.insert("lineNumber".into(), Value::from(err.line_number));
     m.insert(
         "ruleNames".into(),
-        Value::Array(err.rule_names.iter().map(|s| Value::String(s.to_string())).collect()),
+        Value::Array(
+            err.rule_names
+                .iter()
+                .map(|s| Value::String(s.to_string()))
+                .collect(),
+        ),
     );
     m.insert(
         "ruleDescription".into(),
@@ -115,11 +123,17 @@ fn json_entry(file: &str, err: &LintError) -> Value {
     );
     m.insert(
         "errorDetail".into(),
-        err.error_detail.clone().map(Value::String).unwrap_or(Value::Null),
+        err.error_detail
+            .clone()
+            .map(Value::String)
+            .unwrap_or(Value::Null),
     );
     m.insert(
         "errorContext".into(),
-        err.error_context.clone().map(Value::String).unwrap_or(Value::Null),
+        err.error_context
+            .clone()
+            .map(Value::String)
+            .unwrap_or(Value::Null),
     );
     m.insert(
         "errorRange".into(),
@@ -129,7 +143,10 @@ fn json_entry(file: &str, err: &LintError) -> Value {
         },
     );
     m.insert("fixInfo".into(), json_fix_info(err));
-    m.insert("severity".into(), Value::String(err.severity.as_str().to_string()));
+    m.insert(
+        "severity".into(),
+        Value::String(err.severity.as_str().to_string()),
+    );
     Value::Object(m)
 }
 

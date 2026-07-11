@@ -21,7 +21,10 @@ fn meaningful(tree: &Tree, c: usize) -> bool {
 }
 
 fn run(params: &Params, emit: &mut Emit) {
-    let punctuation = params.config.opt_str("punctuation").unwrap_or(ALL_PUNCTUATION);
+    let punctuation = params
+        .config
+        .opt_str("punctuation")
+        .unwrap_or(ALL_PUNCTUATION);
     let re = match Regex::new(&format!("[{}]$", regex::escape(punctuation))) {
         Ok(r) => r,
         Err(_) => return,
@@ -34,21 +37,26 @@ fn run(params: &Params, emit: &mut Emit) {
         .into_iter()
         .filter(|&p| {
             let parent = tree.get(p).parent;
-            let is_content = parent.map(|c| tree.get(c).kind == "content").unwrap_or(false);
+            let is_content = parent
+                .map(|c| tree.get(c).kind == "content")
+                .unwrap_or(false);
             if !is_content {
                 return false;
             }
             let grand = parent.and_then(|c| tree.get(c).parent);
             let grand_ok = match grand {
                 None => true,
-                Some(g) => {
-                    tree.get(g).kind == "htmlFlow" && tree.get(g).parent.is_none()
-                }
+                Some(g) => tree.get(g).kind == "htmlFlow" && tree.get(g).parent.is_none(),
             };
             if !grand_ok {
                 return false;
             }
-            tree.get(p).children.iter().filter(|&&c| meaningful(tree, c)).count() == 1
+            tree.get(p)
+                .children
+                .iter()
+                .filter(|&&c| meaningful(tree, c))
+                .count()
+                == 1
         })
         .collect();
 

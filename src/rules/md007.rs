@@ -32,8 +32,8 @@ fn run(params: &Params, emit: &mut Emit) {
                 let mut nesting: i64 = 0;
                 let mut current = token;
                 loop {
-                    let Some(p) =
-                        tree.parent_of_type(current, &["blockQuote", "listOrdered", "listUnordered"])
+                    let Some(p) = tree
+                        .parent_of_type(current, &["blockQuote", "listOrdered", "listUnordered"])
                     else {
                         break;
                     };

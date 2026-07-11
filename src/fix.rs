@@ -15,8 +15,16 @@ struct Norm {
 
 fn normalize(fi: &FixInfo, line_number: usize) -> Norm {
     Norm {
-        line_number: fi.line_number.map(|v| v as i64).filter(|v| *v != 0).unwrap_or(line_number as i64),
-        edit_column: fi.edit_column.map(|v| v as i64).filter(|v| *v != 0).unwrap_or(1),
+        line_number: fi
+            .line_number
+            .map(|v| v as i64)
+            .filter(|v| *v != 0)
+            .unwrap_or(line_number as i64),
+        edit_column: fi
+            .edit_column
+            .map(|v| v as i64)
+            .filter(|v| *v != 0)
+            .unwrap_or(1),
         delete_count: fi.delete_count.unwrap_or(0),
         insert_text: fi.insert_text.clone().unwrap_or_default(),
     }
@@ -86,7 +94,12 @@ pub fn apply_fixes(input: &str, fixes: &[(usize, FixInfo)]) -> String {
                 }
             })
             .then(b.edit_column.cmp(&a.edit_column))
-            .then(b.insert_text.chars().count().cmp(&a.insert_text.chars().count()))
+            .then(
+                b.insert_text
+                    .chars()
+                    .count()
+                    .cmp(&a.insert_text.chars().count()),
+            )
     });
 
     // Remove duplicate entries.

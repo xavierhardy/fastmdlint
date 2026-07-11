@@ -20,7 +20,11 @@ pub const MD050: RuleMeta = RuleMeta {
 };
 
 fn style_for(text: &str) -> &'static str {
-    if text.starts_with('*') { "asterisk" } else { "underscore" }
+    if text.starts_with('*') {
+        "asterisk"
+    } else {
+        "underscore"
+    }
 }
 
 fn is_word(c: Option<char>) -> bool {
@@ -95,12 +99,28 @@ fn impl_rule(
 
 fn run_md049(params: &Params, emit: &mut Emit) {
     let style = params.config.opt_str("style").unwrap_or("consistent");
-    let style = if style.is_empty() { "consistent" } else { style };
-    impl_rule(params, emit, "emphasis", "emphasisSequence", "*", "_", style);
+    let style = if style.is_empty() {
+        "consistent"
+    } else {
+        style
+    };
+    impl_rule(
+        params,
+        emit,
+        "emphasis",
+        "emphasisSequence",
+        "*",
+        "_",
+        style,
+    );
 }
 
 fn run_md050(params: &Params, emit: &mut Emit) {
     let style = params.config.opt_str("style").unwrap_or("consistent");
-    let style = if style.is_empty() { "consistent" } else { style };
+    let style = if style.is_empty() {
+        "consistent"
+    } else {
+        style
+    };
     impl_rule(params, emit, "strong", "strongSequence", "**", "__", style);
 }

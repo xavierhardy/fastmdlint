@@ -16,7 +16,12 @@ fn lower_list(params: &Params, key: &str) -> Vec<String> {
     params
         .config
         .opt_array(key)
-        .map(|a| a.iter().filter_map(|v| v.as_str()).map(|s| s.to_lowercase()).collect())
+        .map(|a| {
+            a.iter()
+                .filter_map(|v| v.as_str())
+                .map(|s| s.to_lowercase())
+                .collect()
+        })
         .unwrap_or_default()
 }
 
@@ -36,9 +41,16 @@ fn run(params: &Params, emit: &mut Emit) {
             }
             let name = info.name.to_lowercase();
             let in_table = tree.parent_of_type(t, &["table"]).is_some();
-            if (in_table || !allowed.contains(&name)) && (!in_table || !table_allowed.contains(&name))
+            if (in_table || !allowed.contains(&name))
+                && (!in_table || !table_allowed.contains(&name))
             {
-                let len = tok.text.split(['\r', '\n']).next().unwrap_or("").chars().count();
+                let len = tok
+                    .text
+                    .split(['\r', '\n'])
+                    .next()
+                    .unwrap_or("")
+                    .chars()
+                    .count();
                 emit.add(
                     tok.start_line,
                     Some(format!("Element: {}", info.name)),

@@ -21,8 +21,7 @@ fn run(params: &Params, emit: &mut Emit) {
         if style_for_token != style {
             let h12 = params.tree.heading_level(h) <= 2;
             let setext_with_atx = style == "setext_with_atx"
-                && ((h12 && style_for_token == "setext")
-                    || (!h12 && style_for_token == "atx"));
+                && ((h12 && style_for_token == "setext") || (!h12 && style_for_token == "atx"));
             let setext_with_atx_closed = style == "setext_with_atx_closed"
                 && ((h12 && style_for_token == "setext")
                     || (!h12 && style_for_token == "atx_closed"));

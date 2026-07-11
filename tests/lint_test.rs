@@ -4,7 +4,7 @@
 
 use fastmdlint::config::Config;
 use fastmdlint::linter::lint;
-use fastmdlint::output::{render, FileReport, OutputFormat};
+use fastmdlint::output::{FileReport, OutputFormat, render};
 use serde_json::json;
 
 /// Lint `content` with the given config JSON and render text output as the CLI
@@ -117,7 +117,10 @@ fn json_output_shape() {
 #[test]
 fn severity_warning_from_config() {
     let md = "#x\n";
-    let out = run_text(md, json!({ "default": false, "MD018": { "severity": "warning" } }));
+    let out = run_text(
+        md,
+        json!({ "default": false, "MD018": { "severity": "warning" } }),
+    );
     assert!(out.contains(" warning MD018/"), "{out}");
 }
 
@@ -126,7 +129,10 @@ fn md049_emphasis_style_consistent() {
     let md = "# T\n\nUse *a* and _b_ here.\n";
     let out = run_text(md, json!({ "default": false, "MD049": true }));
     assert!(out.contains("MD049/emphasis-style"), "{out}");
-    assert!(out.contains("[Expected: asterisk; Actual: underscore]"), "{out}");
+    assert!(
+        out.contains("[Expected: asterisk; Actual: underscore]"),
+        "{out}"
+    );
 }
 
 #[test]
@@ -149,7 +155,10 @@ fn md052_undefined_reference() {
     // MD001 (a micromark rule) is co-enabled so tokens are parsed; MD052
     // alone would see an empty token list (upstream parser:"none" quirk).
     let md = "# T\n\nA [text][missing] link.\n";
-    let out = run_text(md, json!({ "default": false, "MD052": true, "MD001": true }));
+    let out = run_text(
+        md,
+        json!({ "default": false, "MD052": true, "MD001": true }),
+    );
     assert!(out.contains("MD052/reference-links-images"), "{out}");
     assert!(out.contains("\"missing\""), "{out}");
 }
@@ -166,14 +175,20 @@ fn md054_shortcut_reference_links() {
     // A defined shortcut reference is a real link; with shortcut:false it is
     // flagged (matches markdownlint-cli).
     let md = "A [sc] link.\n\n[sc]: http://x.com\n";
-    let out = run_text(md, json!({ "default": false, "MD054": { "shortcut": false } }));
+    let out = run_text(
+        md,
+        json!({ "default": false, "MD054": { "shortcut": false } }),
+    );
     assert_eq!(
         out,
         "f.md:1:3 error MD054/link-image-style Link and image style [Context: \"[sc]\"]"
     );
     // An undefined bracket is plain text, not a link — nothing to flag.
     let md = "A [notdefined] text.\n";
-    let out = run_text(md, json!({ "default": false, "MD054": { "shortcut": false } }));
+    let out = run_text(
+        md,
+        json!({ "default": false, "MD054": { "shortcut": false } }),
+    );
     assert_eq!(out, "");
 }
 
@@ -197,18 +212,33 @@ fn md052_undefined_references_and_shortcut_syntax() {
     // Full/collapsed undefined references are flagged; MD001 (a micromark
     // rule) is co-enabled so the token tree is parsed, matching upstream.
     let md = "A [text][gone] and [coll][] refs.\n";
-    let out = run_text(md, json!({ "default": false, "MD052": true, "MD001": true }));
-    assert!(out.contains("Missing link or image reference definition: \"gone\""), "{out}");
-    assert!(out.contains("Missing link or image reference definition: \"coll\""), "{out}");
+    let out = run_text(
+        md,
+        json!({ "default": false, "MD052": true, "MD001": true }),
+    );
+    assert!(
+        out.contains("Missing link or image reference definition: \"gone\""),
+        "{out}"
+    );
+    assert!(
+        out.contains("Missing link or image reference definition: \"coll\""),
+        "{out}"
+    );
     // Shortcuts only flagged with shortcut_syntax: true.
     let md = "A [shortcut] here.\n";
-    let out = run_text(md, json!({ "default": false, "MD052": true, "MD001": true }));
+    let out = run_text(
+        md,
+        json!({ "default": false, "MD052": true, "MD001": true }),
+    );
     assert_eq!(out, "");
     let out = run_text(
         md,
         json!({ "default": false, "MD052": { "shortcut_syntax": true }, "MD001": true }),
     );
-    assert!(out.contains("Missing link or image reference definition: \"shortcut\""), "{out}");
+    assert!(
+        out.contains("Missing link or image reference definition: \"shortcut\""),
+        "{out}"
+    );
     // Default ignored_labels ["x"] keeps task-list checkboxes quiet.
     let md = "- [x] done\n";
     let out = run_text(

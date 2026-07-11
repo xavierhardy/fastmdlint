@@ -29,7 +29,12 @@ fn run(params: &Params, emit: &mut Emit) {
             .children
             .iter()
             .copied()
-            .filter(|&c| matches!(tree.get(c).kind, "tableData" | "tableDelimiter" | "tableHeader"))
+            .filter(|&c| {
+                matches!(
+                    tree.get(c).kind,
+                    "tableData" | "tableDelimiter" | "tableHeader"
+                )
+            })
             .collect();
         let actual = cells.len();
         if expected == 0 {
@@ -43,7 +48,10 @@ fn run(params: &Params, emit: &mut Emit) {
         } else if expected < actual {
             (
                 Some("Too many cells, extra data will be missing".to_string()),
-                Some(make_range(tree.get(cells[expected]).start_column, tree.get(row).end_column - 1)),
+                Some(make_range(
+                    tree.get(cells[expected]).start_column,
+                    tree.get(row).end_column - 1,
+                )),
             )
         } else {
             (None, None)

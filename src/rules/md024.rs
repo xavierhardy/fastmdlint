@@ -39,7 +39,14 @@ fn run(params: &Params, emit: &mut Emit) {
             known.resize(idx + 1, Vec::new());
         }
         if known[idx].contains(&text) {
-            emit.add_context(tree.get(h).start_line, text.trim(), false, false, None, None);
+            emit.add_context(
+                tree.get(h).start_line,
+                text.trim(),
+                false,
+                false,
+                None,
+                None,
+            );
         } else {
             known[idx].push(text);
         }

@@ -1,6 +1,6 @@
 //! MD022 — blanks-around-headings.
 
-use super::helpers::{is_blank_line, ConfigExt};
+use super::helpers::{ConfigExt, is_blank_line};
 use super::{Emit, FixInfo, Params, RuleMeta};
 use crate::md::Tree;
 use serde_json::Value;
@@ -24,12 +24,20 @@ fn lines_for(config_val: Option<&Value>, level: usize) -> i64 {
             }
             lines[level - 1]
         }
-        Some(v) => v.as_i64().or_else(|| v.as_f64().map(|f| f as i64)).unwrap_or(1),
+        Some(v) => v
+            .as_i64()
+            .or_else(|| v.as_f64().map(|f| f as i64))
+            .unwrap_or(1),
         None => 1,
     }
 }
 
-fn block_quote_prefix_text(tree: &Tree, prefixes: &[usize], line_number: usize, count: i64) -> String {
+fn block_quote_prefix_text(
+    tree: &Tree,
+    prefixes: &[usize],
+    line_number: usize,
+    count: i64,
+) -> String {
     if count <= 0 {
         return String::new();
     }

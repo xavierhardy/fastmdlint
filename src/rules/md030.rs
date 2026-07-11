@@ -26,7 +26,8 @@ fn run(params: &Params, emit: &mut Emit) {
             .copied()
             .filter(|&c| tree.get(c).kind == "listItemPrefix")
             .collect();
-        let all_single = (tree.get(list).end_line - tree.get(list).start_line + 1) == prefixes.len();
+        let all_single =
+            (tree.get(list).end_line - tree.get(list).start_line + 1) == prefixes.len();
         let expected = if ordered {
             if all_single { ol_single } else { ol_multi }
         } else if all_single {

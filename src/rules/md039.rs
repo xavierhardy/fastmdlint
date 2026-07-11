@@ -21,7 +21,13 @@ fn end_ws() -> &'static Regex {
     RE.get_or_init(|| Regex::new(r"[^\S\r\n]+$").unwrap())
 }
 
-fn add_label_space_error(emit: &mut Emit, tree: &crate::md::Tree, label: usize, label_text: usize, is_start: bool) {
+fn add_label_space_error(
+    emit: &mut Emit,
+    tree: &crate::md::Tree,
+    label: usize,
+    label_text: usize,
+    is_start: bool,
+) {
     let lt = tree.get(label_text);
     let m = if is_start {
         start_ws().find(&lt.text)

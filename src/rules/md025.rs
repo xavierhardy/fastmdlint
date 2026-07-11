@@ -1,6 +1,6 @@
 //! MD025 — single-title / single-h1.
 
-use super::helpers::{front_matter_has_title, is_html_flow_comment, ConfigExt};
+use super::helpers::{ConfigExt, front_matter_has_title, is_html_flow_comment};
 use super::{Emit, Params, RuleMeta};
 use crate::md::tokens::NON_CONTENT_TOKENS;
 
@@ -33,12 +33,14 @@ fn run(params: &Params, emit: &mut Emit) {
         // Every top-level token before the first matching heading must be a
         // non-content token or an HTML-flow comment.
         let first = matching[0];
-        let stop = tree.roots.iter().position(|&r| r == first).unwrap_or(tree.roots.len().saturating_sub(1));
-        has_top_level = tree
+        let stop = tree
             .roots
             .iter()
-            .take(stop)
-            .all(|&r| NON_CONTENT_TOKENS.contains(&tree.get(r).kind) || is_html_flow_comment(tree, r));
+            .position(|&r| r == first)
+            .unwrap_or(tree.roots.len().saturating_sub(1));
+        has_top_level = tree.roots.iter().take(stop).all(|&r| {
+            NON_CONTENT_TOKENS.contains(&tree.get(r).kind) || is_html_flow_comment(tree, r)
+        });
     }
     if has_top_level {
         let skip = if found_front_matter { 0 } else { 1 };

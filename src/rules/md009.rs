@@ -66,11 +66,19 @@ fn run(params: &Params, emit: &mut Emit) {
     if strict {
         for &p in &tree.filter_idx(&["paragraph"]) {
             let t = tree.get(p);
-            add_range(&mut paragraph_lines, t.start_line, t.end_line.saturating_sub(1).max(t.start_line));
+            add_range(
+                &mut paragraph_lines,
+                t.start_line,
+                t.end_line.saturating_sub(1).max(t.start_line),
+            );
         }
         for &c in &tree.filter_idx(&["codeText"]) {
             let t = tree.get(c);
-            add_range(&mut code_inline_lines, t.start_line, t.end_line.saturating_sub(1).max(t.start_line));
+            add_range(
+                &mut code_inline_lines,
+                t.start_line,
+                t.end_line.saturating_sub(1).max(t.start_line),
+            );
         }
     }
 

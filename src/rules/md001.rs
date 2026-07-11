@@ -1,6 +1,6 @@
 //! MD001 — heading-increment.
 
-use super::helpers::{front_matter_has_title, ConfigExt};
+use super::helpers::{ConfigExt, front_matter_has_title};
 use super::{Emit, Params, RuleMeta};
 
 pub const RULE: RuleMeta = RuleMeta {

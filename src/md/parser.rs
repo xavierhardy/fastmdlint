@@ -45,7 +45,10 @@ fn count_indent(chars: &[char]) -> usize {
 }
 
 fn leading_spaces(chars: &[char]) -> usize {
-    chars.iter().take_while(|c| **c == ' ' || **c == '\t').count()
+    chars
+        .iter()
+        .take_while(|c| **c == ' ' || **c == '\t')
+        .count()
 }
 
 fn is_blank(chars: &[char]) -> bool {
@@ -184,7 +187,14 @@ impl Parser {
             // start column 1.
         }
         if self.lines[i].has_newline {
-            let t = self.tok("lineEndingBlank", i + 1, len + 1, i + 2, 1, "\n".to_string());
+            let t = self.tok(
+                "lineEndingBlank",
+                i + 1,
+                len + 1,
+                i + 2,
+                1,
+                "\n".to_string(),
+            );
             self.push(t, None);
         }
     }
@@ -602,7 +612,14 @@ impl Parser {
         self.emit_line_ending(start + 1, self.line_len(start + 1) + 1, Some(tidx));
 
         if end >= start + 2 {
-            let body = self.tok("tableBody", start + 3, 1, end + 1, last_len + 1, String::new());
+            let body = self.tok(
+                "tableBody",
+                start + 3,
+                1,
+                end + 1,
+                last_len + 1,
+                String::new(),
+            );
             let bidx = self.push(body, Some(tidx));
             for row in (start + 2)..=end {
                 self.emit_table_row(row, bidx, "tableData");
@@ -621,8 +638,19 @@ impl Parser {
         let lead = leading_spaces(&lc);
         let cells = compute_cells(&lc, lead);
         let is_delim = cell_kind == "tableDelimiter";
-        let row_kind = if is_delim { "tableDelimiterRow" } else { "tableRow" };
-        let row = self.tok(row_kind, line_no, lead + 1, line_no, lc.len() + 1, lc.iter().collect());
+        let row_kind = if is_delim {
+            "tableDelimiterRow"
+        } else {
+            "tableRow"
+        };
+        let row = self.tok(
+            row_kind,
+            line_no,
+            lead + 1,
+            line_no,
+            lc.len() + 1,
+            lc.iter().collect(),
+        );
         let ridx = self.push(row, Some(parent));
         for (cs, ce) in cells {
             let cell = self.tok(
@@ -636,7 +664,14 @@ impl Parser {
             let cidx = self.push(cell, Some(ridx));
             let mut p = cs;
             if p < ce && lc[p] == '|' {
-                let d = self.tok("tableCellDivider", line_no, p + 1, line_no, p + 2, "|".into());
+                let d = self.tok(
+                    "tableCellDivider",
+                    line_no,
+                    p + 1,
+                    line_no,
+                    p + 2,
+                    "|".into(),
+                );
                 self.push(d, Some(cidx));
                 p += 1;
             }
@@ -646,7 +681,14 @@ impl Parser {
                 q += 1;
             }
             if q > p {
-                let w = self.tok("whitespace", line_no, p + 1, line_no, q + 1, lc[p..q].iter().collect());
+                let w = self.tok(
+                    "whitespace",
+                    line_no,
+                    p + 1,
+                    line_no,
+                    q + 1,
+                    lc[p..q].iter().collect(),
+                );
                 self.push(w, Some(cidx));
             }
             p = q;
@@ -675,21 +717,53 @@ impl Parser {
                     lc[p..c_end].iter().collect(),
                 );
                 let coidx = self.push(content, Some(cidx));
-                let child_kind = if is_delim { "tableDelimiterFiller" } else { "data" };
-                let child = self.tok(child_kind, line_no, p + 1, line_no, c_end + 1, lc[p..c_end].iter().collect());
+                let child_kind = if is_delim {
+                    "tableDelimiterFiller"
+                } else {
+                    "data"
+                };
+                let child = self.tok(
+                    child_kind,
+                    line_no,
+                    p + 1,
+                    line_no,
+                    c_end + 1,
+                    lc[p..c_end].iter().collect(),
+                );
                 self.push(child, Some(coidx));
             }
             // trailing whitespace before divider (or to cell end)
             let ws_end = content_end;
             if ws_end > c_end {
-                let w = self.tok("whitespace", line_no, c_end + 1, line_no, ws_end + 1, lc[c_end..ws_end].iter().collect());
+                let w = self.tok(
+                    "whitespace",
+                    line_no,
+                    c_end + 1,
+                    line_no,
+                    ws_end + 1,
+                    lc[c_end..ws_end].iter().collect(),
+                );
                 self.push(w, Some(cidx));
             }
             if let Some(dp) = trailing_div {
-                let d = self.tok("tableCellDivider", line_no, dp + 1, line_no, dp + 2, "|".into());
+                let d = self.tok(
+                    "tableCellDivider",
+                    line_no,
+                    dp + 1,
+                    line_no,
+                    dp + 2,
+                    "|".into(),
+                );
                 self.push(d, Some(cidx));
                 if ce > dp + 1 {
-                    let w = self.tok("whitespace", line_no, dp + 2, line_no, ce + 1, lc[dp + 1..ce].iter().collect());
+                    let w = self.tok(
+                        "whitespace",
+                        line_no,
+                        dp + 2,
+                        line_no,
+                        ce + 1,
+                        lc[dp + 1..ce].iter().collect(),
+                    );
                     self.push(w, Some(cidx));
                 }
             }
@@ -814,9 +888,23 @@ impl Parser {
 
         // Line 1 prefix is a direct child of the blockQuote.
         let first_content_col = self.emit_bq_prefix(start, bqidx);
-        let content = self.tok("content", sl, first_content_col + 1, end + 1, last_len + 1, String::new());
+        let content = self.tok(
+            "content",
+            sl,
+            first_content_col + 1,
+            end + 1,
+            last_len + 1,
+            String::new(),
+        );
         let cidx = self.push(content, Some(bqidx));
-        let para = self.tok("paragraph", sl, first_content_col + 1, end + 1, last_len + 1, String::new());
+        let para = self.tok(
+            "paragraph",
+            sl,
+            first_content_col + 1,
+            end + 1,
+            last_len + 1,
+            String::new(),
+        );
         let pidx = self.push(para, Some(cidx));
 
         for k in start..=end {
@@ -824,7 +912,14 @@ impl Parser {
                 first_content_col
             } else {
                 // lineEnding then this line's prefix, inside the paragraph.
-                let t = self.tok("lineEnding", k, self.line_len(k - 1) + 1, k + 1, 1, "\n".to_string());
+                let t = self.tok(
+                    "lineEnding",
+                    k,
+                    self.line_len(k - 1) + 1,
+                    k + 1,
+                    1,
+                    "\n".to_string(),
+                );
                 self.push(t, Some(pidx));
                 self.emit_bq_prefix(k, pidx)
             };
@@ -847,12 +942,23 @@ impl Parser {
             return leading_spaces(&lc).min(lc.len()); // lazy continuation
         }
         if lead > 0 {
-            let lp = self.tok("linePrefix", line_no, 1, line_no, lead + 1, lc[..lead].iter().collect());
+            let lp = self.tok(
+                "linePrefix",
+                line_no,
+                1,
+                line_no,
+                lead + 1,
+                lc[..lead].iter().collect(),
+            );
             self.push(lp, Some(parent));
         }
         let marker_col = lead;
         let has_space = lc.get(marker_col + 1) == Some(&' ');
-        let pe = if has_space { marker_col + 2 } else { marker_col + 1 };
+        let pe = if has_space {
+            marker_col + 2
+        } else {
+            marker_col + 1
+        };
         let prefix = self.tok(
             "blockQuotePrefix",
             line_no,
@@ -862,10 +968,24 @@ impl Parser {
             lc[marker_col..pe].iter().collect(),
         );
         let pidx = self.push(prefix, Some(parent));
-        let marker = self.tok("blockQuoteMarker", line_no, marker_col + 1, line_no, marker_col + 2, ">".into());
+        let marker = self.tok(
+            "blockQuoteMarker",
+            line_no,
+            marker_col + 1,
+            line_no,
+            marker_col + 2,
+            ">".into(),
+        );
         self.push(marker, Some(pidx));
         if has_space {
-            let w = self.tok("blockQuotePrefixWhitespace", line_no, marker_col + 2, line_no, pe + 1, " ".into());
+            let w = self.tok(
+                "blockQuotePrefixWhitespace",
+                line_no,
+                marker_col + 2,
+                line_no,
+                pe + 1,
+                " ".into(),
+            );
             self.push(w, Some(pidx));
         }
         let mut ee = pe;
@@ -873,7 +993,14 @@ impl Parser {
             ee += 1;
         }
         if ee > pe {
-            let lp = self.tok("linePrefix", line_no, pe + 1, line_no, ee + 1, lc[pe..ee].iter().collect());
+            let lp = self.tok(
+                "linePrefix",
+                line_no,
+                pe + 1,
+                line_no,
+                ee + 1,
+                lc[pe..ee].iter().collect(),
+            );
             self.push(lp, Some(parent));
         }
         ee
@@ -890,7 +1017,11 @@ impl Parser {
         }
         let marker_col = lead;
         let has_space = lc.get(marker_col + 1) == Some(&' ');
-        let pe = if has_space { marker_col + 2 } else { marker_col + 1 };
+        let pe = if has_space {
+            marker_col + 2
+        } else {
+            marker_col + 1
+        };
         let prefix = self.tok(
             "blockQuotePrefix",
             line_no,
@@ -900,10 +1031,24 @@ impl Parser {
             lc[marker_col..pe].iter().collect(),
         );
         let pidx = self.push(prefix, Some(parent));
-        let marker = self.tok("blockQuoteMarker", line_no, marker_col + 1, line_no, marker_col + 2, ">".into());
+        let marker = self.tok(
+            "blockQuoteMarker",
+            line_no,
+            marker_col + 1,
+            line_no,
+            marker_col + 2,
+            ">".into(),
+        );
         self.push(marker, Some(pidx));
         if has_space {
-            let w = self.tok("blockQuotePrefixWhitespace", line_no, marker_col + 2, line_no, pe + 1, " ".into());
+            let w = self.tok(
+                "blockQuotePrefixWhitespace",
+                line_no,
+                marker_col + 2,
+                line_no,
+                pe + 1,
+                " ".into(),
+            );
             self.push(w, Some(pidx));
         }
     }
@@ -928,14 +1073,35 @@ impl Parser {
         }
     }
 
-    fn reemit_bq(&mut self, sub: &Tree, sidx: usize, new_parent: usize, wmap: &[usize], start: usize, end: usize) {
+    fn reemit_bq(
+        &mut self,
+        sub: &Tree,
+        sidx: usize,
+        new_parent: usize,
+        wmap: &[usize],
+        start: usize,
+        end: usize,
+    ) {
         let s = &sub.tokens[sidx];
-        let (kind, ssl, ssc, sel, sec) = (s.kind, s.start_line, s.start_column, s.end_line, s.end_column);
+        let (kind, ssl, ssc, sel, sec) = (
+            s.kind,
+            s.start_line,
+            s.start_column,
+            s.end_line,
+            s.end_column,
+        );
         let text = s.text.clone();
         let children = s.children.clone();
         let wstart = wmap.get(ssl.saturating_sub(1)).copied().unwrap_or(0);
         let wend = wmap.get(sel.saturating_sub(1)).copied().unwrap_or(0);
-        let tok = self.tok(kind, start + ssl, ssc + wstart, start + sel, sec + wend, text);
+        let tok = self.tok(
+            kind,
+            start + ssl,
+            ssc + wstart,
+            start + sel,
+            sec + wend,
+            text,
+        );
         let nidx = self.push(tok, Some(new_parent));
         for c in children {
             self.reemit_bq(sub, c, nidx, wmap, start, end);
@@ -959,7 +1125,11 @@ impl Parser {
         let lead = leading_spaces(&first_chars);
         let ft: String = first_chars.iter().skip(lead).collect();
         let (ordered, first_marker, _) = list_marker(&ft).unwrap();
-        let kind = if ordered { "listOrdered" } else { "listUnordered" };
+        let kind = if ordered {
+            "listOrdered"
+        } else {
+            "listUnordered"
+        };
         let first_sig = (ordered, first_marker);
 
         let list = self.tok(kind, start + 1, lead + 1, start + 1, 1, String::new());
@@ -1257,11 +1427,22 @@ impl Parser {
         let pidx = self.push(para, Some(cidx));
         for k in start..=end {
             let lc = self.lines[k].chars.clone();
-            let lead = if k == start { first_lead } else { leading_spaces(&lc) };
+            let lead = if k == start {
+                first_lead
+            } else {
+                leading_spaces(&lc)
+            };
             let line_no = k + 1;
             self.parse_inline(&lc[lead..], line_no, lead + 1, pidx);
             if k < end {
-                let t = self.tok("lineEnding", line_no, lc.len() + 1, line_no + 1, 1, "\n".to_string());
+                let t = self.tok(
+                    "lineEnding",
+                    line_no,
+                    lc.len() + 1,
+                    line_no + 1,
+                    1,
+                    "\n".to_string(),
+                );
                 self.push(t, Some(pidx));
             }
         }
@@ -1289,16 +1470,34 @@ impl Parser {
         let tidx = self.push(text, Some(shidx));
         for k in start..=end {
             let lc = self.lines[k].chars.clone();
-            let lead = if k == start { first_lead } else { leading_spaces(&lc) };
+            let lead = if k == start {
+                first_lead
+            } else {
+                leading_spaces(&lc)
+            };
             let line_no = k + 1;
             self.parse_inline(&lc[lead..], line_no, lead + 1, tidx);
             if k < end {
-                let t = self.tok("lineEnding", line_no, lc.len() + 1, line_no + 1, 1, "\n".to_string());
+                let t = self.tok(
+                    "lineEnding",
+                    line_no,
+                    lc.len() + 1,
+                    line_no + 1,
+                    1,
+                    "\n".to_string(),
+                );
                 self.push(t, Some(tidx));
             }
         }
         // lineEnding between text and underline
-        let te = self.tok("lineEnding", end + 1, text_last_len + 1, end + 2, 1, "\n".to_string());
+        let te = self.tok(
+            "lineEnding",
+            end + 1,
+            text_last_len + 1,
+            end + 2,
+            1,
+            "\n".to_string(),
+        );
         self.push(te, Some(shidx));
         // setextHeadingLine
         let uline = self.tok(
@@ -1449,7 +1648,10 @@ impl Parser {
                         self.push(seq, Some(f.emph_idx));
                         i += f.close_len;
                         data_start = i;
-                        cur = frames.last().map(|fr| self.tree.tokens[fr.emph_idx].children[1]).unwrap_or(parent);
+                        cur = frames
+                            .last()
+                            .map(|fr| self.tree.tokens[fr.emph_idx].children[1])
+                            .unwrap_or(parent);
                         moved = true;
                         continue;
                     }
@@ -1536,17 +1738,23 @@ impl Parser {
                 continue;
             }
             if c == '`' {
-                if let Some(end) = self.try_code_span(chars, i, line_no, start_col, cur, &mut data_start) {
+                if let Some(end) =
+                    self.try_code_span(chars, i, line_no, start_col, cur, &mut data_start)
+                {
                     i = end;
                     continue;
                 }
             }
             if c == '<' {
-                if let Some(end) = self.try_autolink(chars, i, line_no, start_col, cur, &mut data_start) {
+                if let Some(end) =
+                    self.try_autolink(chars, i, line_no, start_col, cur, &mut data_start)
+                {
                     i = end;
                     continue;
                 }
-                if let Some(end) = self.try_html_text(chars, i, line_no, start_col, cur, &mut data_start) {
+                if let Some(end) =
+                    self.try_html_text(chars, i, line_no, start_col, cur, &mut data_start)
+                {
                     i = end;
                     continue;
                 }
@@ -1554,7 +1762,9 @@ impl Parser {
             if (c == '[' && suppressed_link_at != Some(i))
                 || (c == '!' && chars.get(i + 1) == Some(&'['))
             {
-                if let Some(end) = self.try_link_image(chars, i, line_no, start_col, cur, &mut data_start) {
+                if let Some(end) =
+                    self.try_link_image(chars, i, line_no, start_col, cur, &mut data_start)
+                {
                     i = end;
                     continue;
                 }
@@ -1565,7 +1775,9 @@ impl Parser {
                 }
             }
             if (c == 'h' || c == 'H' || c == 'w' || c == 'W') && is_url_boundary(chars, i) {
-                if let Some(end) = self.try_literal_autolink(chars, i, line_no, start_col, cur, &mut data_start) {
+                if let Some(end) =
+                    self.try_literal_autolink(chars, i, line_no, start_col, cur, &mut data_start)
+                {
                     i = end;
                     continue;
                 }
@@ -1573,7 +1785,9 @@ impl Parser {
             if (c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '%' | '+' | '-'))
                 && is_url_boundary(chars, i)
             {
-                if let Some(end) = self.try_literal_email(chars, i, line_no, start_col, cur, &mut data_start) {
+                if let Some(end) =
+                    self.try_literal_email(chars, i, line_no, start_col, cur, &mut data_start)
+                {
                     i = end;
                     continue;
                 }
@@ -1666,7 +1880,14 @@ impl Parser {
                 && content[content.len() - 1] == ' '
                 && content.iter().any(|c| *c != ' ');
             if has_pad {
-                let p1 = self.tok("codeTextPadding", line_no, start_col + cs, line_no, start_col + cs + 1, " ".into());
+                let p1 = self.tok(
+                    "codeTextPadding",
+                    line_no,
+                    start_col + cs,
+                    line_no,
+                    start_col + cs + 1,
+                    " ".into(),
+                );
                 self.push(p1, Some(ctidx));
                 if close - 1 > cs + 1 {
                     let d = self.tok(
@@ -1679,7 +1900,14 @@ impl Parser {
                     );
                     self.push(d, Some(ctidx));
                 }
-                let p2 = self.tok("codeTextPadding", line_no, start_col + close - 1, line_no, start_col + close, " ".into());
+                let p2 = self.tok(
+                    "codeTextPadding",
+                    line_no,
+                    start_col + close - 1,
+                    line_no,
+                    start_col + close,
+                    " ".into(),
+                );
                 self.push(p2, Some(ctidx));
             } else {
                 let d = self.tok(
@@ -1741,9 +1969,20 @@ impl Parser {
             chars[i..end].iter().collect(),
         );
         let alidx = self.push(al, Some(parent));
-        let m1 = self.tok("autolinkMarker", line_no, start_col + i, line_no, start_col + i + 1, "<".into());
+        let m1 = self.tok(
+            "autolinkMarker",
+            line_no,
+            start_col + i,
+            line_no,
+            start_col + i + 1,
+            "<".into(),
+        );
         self.push(m1, Some(alidx));
-        let proto_kind = if is_email { "autolinkEmail" } else { "autolinkProtocol" };
+        let proto_kind = if is_email {
+            "autolinkEmail"
+        } else {
+            "autolinkProtocol"
+        };
         let proto = self.tok(
             proto_kind,
             line_no,
@@ -1753,7 +1992,14 @@ impl Parser {
             inner,
         );
         self.push(proto, Some(alidx));
-        let m2 = self.tok("autolinkMarker", line_no, start_col + j, line_no, start_col + end, ">".into());
+        let m2 = self.tok(
+            "autolinkMarker",
+            line_no,
+            start_col + j,
+            line_no,
+            start_col + end,
+            ">".into(),
+        );
         self.push(m2, Some(alidx));
         *data_start = end;
         Some(end)
@@ -1773,7 +2019,10 @@ impl Parser {
         let end_off = if rest.starts_with("<!--") {
             rest.find("-->").map(|p| p + 3)
         } else {
-            html_tag_re().find(&rest).filter(|m| m.start() == 0).map(|m| m.as_str().chars().count())
+            html_tag_re()
+                .find(&rest)
+                .filter(|m| m.start() == 0)
+                .map(|m| m.as_str().chars().count())
         }?;
         self.flush_data(*data_start, i, chars, line_no, start_col, parent);
         let end = i + end_off;
@@ -1824,7 +2073,11 @@ impl Parser {
             text.clone(),
         );
         let laidx = self.push(la, Some(parent));
-        let kind = if www { "literalAutolinkWww" } else { "literalAutolinkHttp" };
+        let kind = if www {
+            "literalAutolinkWww"
+        } else {
+            "literalAutolinkHttp"
+        };
         let child = self.tok(kind, line_no, start_col + i, line_no, start_col + end, text);
         self.push(child, Some(laidx));
         *data_start = end;
@@ -1853,9 +2106,23 @@ impl Parser {
         self.flush_data(*data_start, i, chars, line_no, start_col, parent);
         let end = i + matched.len();
         let text: String = matched.iter().collect();
-        let la = self.tok("literalAutolink", line_no, start_col + i, line_no, start_col + end, text.clone());
+        let la = self.tok(
+            "literalAutolink",
+            line_no,
+            start_col + i,
+            line_no,
+            start_col + end,
+            text.clone(),
+        );
         let laidx = self.push(la, Some(parent));
-        let child = self.tok("literalAutolinkEmail", line_no, start_col + i, line_no, start_col + end, text);
+        let child = self.tok(
+            "literalAutolinkEmail",
+            line_no,
+            start_col + i,
+            line_no,
+            start_col + end,
+            text,
+        );
         self.push(child, Some(laidx));
         *data_start = end;
         Some(end)
@@ -1926,12 +2193,14 @@ impl Parser {
             let label: String = chars[br_open + 1..rb].iter().collect();
             if !self.defined_labels.contains(&normalize_label(&label)) {
                 if !label.trim().is_empty() && !label.contains(']') {
-                    self.tree.undefined_shortcuts.push(super::tokens::UndefinedShortcut {
-                        label,
-                        line: line_no,
-                        column: start_col + i,
-                        length: rb + 1 - i,
-                    });
+                    self.tree
+                        .undefined_shortcuts
+                        .push(super::tokens::UndefinedShortcut {
+                            label,
+                            line: line_no,
+                            column: start_col + i,
+                            length: rb + 1 - i,
+                        });
                 }
                 return None;
             }
@@ -1961,10 +2230,24 @@ impl Parser {
         );
         let lidx = self.push(label, Some(nidx));
         if image {
-            let im = self.tok("labelImageMarker", line_no, start_col + i, line_no, start_col + i + 1, "!".into());
+            let im = self.tok(
+                "labelImageMarker",
+                line_no,
+                start_col + i,
+                line_no,
+                start_col + i + 1,
+                "!".into(),
+            );
             self.push(im, Some(lidx));
         }
-        let lm1 = self.tok("labelMarker", line_no, start_col + br_open, line_no, start_col + br_open + 1, "[".into());
+        let lm1 = self.tok(
+            "labelMarker",
+            line_no,
+            start_col + br_open,
+            line_no,
+            start_col + br_open + 1,
+            "[".into(),
+        );
         self.push(lm1, Some(lidx));
         let text_from = br_open + 1;
         let lt = self.tok(
@@ -1987,7 +2270,14 @@ impl Parser {
             );
             self.push(d, Some(ltidx));
         }
-        let lm2 = self.tok("labelMarker", line_no, start_col + rb, line_no, start_col + rb + 1, "]".into());
+        let lm2 = self.tok(
+            "labelMarker",
+            line_no,
+            start_col + rb,
+            line_no,
+            start_col + rb + 1,
+            "]".into(),
+        );
         self.push(lm2, Some(lidx));
 
         if let Follow::Reference(ref_open, ref_close) = follow {
@@ -2001,7 +2291,14 @@ impl Parser {
                 chars[ref_open..ref_close + 1].iter().collect(),
             );
             let ridx = self.push(reference, Some(nidx));
-            let rm1 = self.tok("referenceMarker", line_no, start_col + ref_open, line_no, start_col + ref_open + 1, "[".into());
+            let rm1 = self.tok(
+                "referenceMarker",
+                line_no,
+                start_col + ref_open,
+                line_no,
+                start_col + ref_open + 1,
+                "[".into(),
+            );
             self.push(rm1, Some(ridx));
             if ref_close > ref_open + 1 {
                 let rs = self.tok(
@@ -2023,7 +2320,14 @@ impl Parser {
                 );
                 self.push(d, Some(rsidx));
             }
-            let rm2 = self.tok("referenceMarker", line_no, start_col + ref_close, line_no, start_col + ref_close + 1, "]".into());
+            let rm2 = self.tok(
+                "referenceMarker",
+                line_no,
+                start_col + ref_close,
+                line_no,
+                start_col + ref_close + 1,
+                "]".into(),
+            );
             self.push(rm2, Some(ridx));
         } else if let Follow::Inline = follow {
             // inline resource ( dest "title" )
@@ -2054,7 +2358,14 @@ impl Parser {
             chars[open..close + 1].iter().collect(),
         );
         let residx = self.push(resource, Some(parent));
-        let m1 = self.tok("resourceMarker", line_no, start_col + open, line_no, start_col + open + 1, "(".into());
+        let m1 = self.tok(
+            "resourceMarker",
+            line_no,
+            start_col + open,
+            line_no,
+            start_col + open + 1,
+            "(".into(),
+        );
         self.push(m1, Some(residx));
         // parse destination
         let mut p = open + 1;
@@ -2117,7 +2428,14 @@ impl Parser {
             );
             self.push(d, Some(sidx));
         }
-        let m2 = self.tok("resourceMarker", line_no, start_col + close, line_no, start_col + close + 1, ")".into());
+        let m2 = self.tok(
+            "resourceMarker",
+            line_no,
+            start_col + close,
+            line_no,
+            start_col + close + 1,
+            ")".into(),
+        );
         self.push(m2, Some(residx));
     }
 
@@ -2133,7 +2451,11 @@ impl Parser {
         for line in sl..=el {
             let lc = &self.lines[line - 1].chars;
             let from = if line == sl { sc - 1 } else { 0 };
-            let to = if line == el { (ec - 1).min(lc.len()) } else { lc.len() };
+            let to = if line == el {
+                (ec - 1).min(lc.len())
+            } else {
+                lc.len()
+            };
             if line > sl {
                 text.push('\n');
             }
@@ -2211,11 +2533,7 @@ fn detect_link(chars: &[char], i: usize) -> Option<usize> {
             }
             k += 1;
         }
-        if k >= chars.len() {
-            None
-        } else {
-            Some(k + 1)
-        }
+        if k >= chars.len() { None } else { Some(k + 1) }
     } else {
         None
     }
@@ -2288,10 +2606,8 @@ pub fn emphasis_spans(chars: &[char], masked: &[(usize, usize)]) -> Vec<EmphSpan
             let after_ws = after.is_whitespace();
             let before_punct = is_md_punct(before);
             let after_punct = is_md_punct(after);
-            let left_flanking =
-                !after_ws && (!after_punct || before_ws || before_punct);
-            let right_flanking =
-                !before_ws && (!before_punct || after_ws || after_punct);
+            let left_flanking = !after_ws && (!after_punct || before_ws || before_punct);
+            let right_flanking = !before_ws && (!before_punct || after_ws || after_punct);
             let (can_open, can_close) = if ch == '_' {
                 (
                     left_flanking && (!right_flanking || before_punct),
@@ -2331,8 +2647,7 @@ pub fn emphasis_spans(chars: &[char], masked: &[(usize, usize)]) -> Vec<EmphSpan
                 k -= 1;
                 if runs[k].can_open && runs[k].ch == runs[c].ch && runs[k].remaining > 0 {
                     // rule of three
-                    let both_multiple_of_3 =
-                        (runs[k].orig % 3 == 0) && (runs[c].orig % 3 == 0);
+                    let both_multiple_of_3 = (runs[k].orig % 3 == 0) && (runs[c].orig % 3 == 0);
                     let sum_multiple_of_3 = (runs[k].orig + runs[c].orig) % 3 == 0;
                     let blocked = (runs[c].can_open || runs[k].can_close)
                         && sum_multiple_of_3
@@ -2388,9 +2703,7 @@ fn html_tag_re() -> &'static regex::Regex {
     static RE: OnceLock<regex::Regex> = OnceLock::new();
     // Open/close tag (attributes without '>' ). A simplification of the
     // CommonMark raw-HTML production sufficient for the rules that use it.
-    RE.get_or_init(|| {
-        regex::Regex::new(r#"^</?[A-Za-z][A-Za-z0-9-]*(?:\s+[^<>]*?)?/?>"#).unwrap()
-    })
+    RE.get_or_init(|| regex::Regex::new(r#"^</?[A-Za-z][A-Za-z0-9-]*(?:\s+[^<>]*?)?/?>"#).unwrap())
 }
 
 fn literal_url_re() -> &'static regex::Regex {
@@ -2425,7 +2738,10 @@ fn is_url_boundary(chars: &[char], i: usize) -> bool {
 fn trim_url_trailing(matched: &mut Vec<char>) {
     loop {
         let Some(&last) = matched.last() else { break };
-        if matches!(last, '?' | '!' | '.' | ',' | ':' | '*' | '_' | '~' | ';' | '\'' | '"') {
+        if matches!(
+            last,
+            '?' | '!' | '.' | ',' | ':' | '*' | '_' | '~' | ';' | '\'' | '"'
+        ) {
             matched.pop();
             continue;
         }
@@ -2552,7 +2868,9 @@ fn fenced_fence(trimmed: &str) -> Option<(char, usize)> {
 }
 
 fn only_fence(trimmed: &str, fence_char: char) -> bool {
-    trimmed.chars().all(|c| c == fence_char || c == ' ' || c == '\t')
+    trimmed
+        .chars()
+        .all(|c| c == fence_char || c == ' ' || c == '\t')
 }
 
 fn is_thematic_break(trimmed: &str) -> bool {
@@ -2808,5 +3126,9 @@ fn is_html_block_start(trimmed: &str) -> bool {
     rest.starts_with('!')
         || rest.starts_with('?')
         || rest.starts_with('/')
-        || rest.chars().next().map(|c| c.is_ascii_alphabetic()).unwrap_or(false)
+        || rest
+            .chars()
+            .next()
+            .map(|c| c.is_ascii_alphabetic())
+            .unwrap_or(false)
 }

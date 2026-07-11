@@ -25,5 +25,5 @@ pub mod rules;
 pub mod runner;
 
 pub use config::{Config, ResolvedConfig};
-pub use linter::{lint, LintError};
+pub use linter::{LintError, lint};
 pub use rules::Severity;

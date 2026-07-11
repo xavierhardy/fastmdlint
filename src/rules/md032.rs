@@ -2,8 +2,8 @@
 
 use super::helpers::is_blank_line;
 use super::{Emit, FixInfo, Params, RuleMeta};
-use crate::md::tokens::NON_CONTENT_TOKENS;
 use crate::md::Tree;
+use crate::md::tokens::NON_CONTENT_TOKENS;
 
 pub const RULE: RuleMeta = RuleMeta {
     names: &["MD032", "blanks-around-lists"],
@@ -51,7 +51,10 @@ fn run(params: &Params, emit: &mut Emit) {
     let top_level: Vec<usize> = tree
         .filter_idx(&["listOrdered", "listUnordered"])
         .into_iter()
-        .filter(|&l| tree.parent_of_type(l, &["listOrdered", "listUnordered"]).is_none())
+        .filter(|&l| {
+            tree.parent_of_type(l, &["listOrdered", "listUnordered"])
+                .is_none()
+        })
         .collect();
 
     for list in top_level {

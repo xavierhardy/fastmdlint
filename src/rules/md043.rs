@@ -13,10 +13,19 @@ pub const RULE: RuleMeta = RuleMeta {
 
 fn run(params: &Params, emit: &mut Emit) {
     let required: Vec<String> = match params.config.opt_array("headings") {
-        Some(a) => a.iter().filter_map(|v| v.as_str()).map(String::from).collect(),
+        Some(a) => a
+            .iter()
+            .filter_map(|v| v.as_str())
+            .map(String::from)
+            .collect(),
         None => return, // nothing to check
     };
-    if params.config.get("headings").map(|v| !v.is_array()).unwrap_or(true) {
+    if params
+        .config
+        .get("headings")
+        .map(|v| !v.is_array())
+        .unwrap_or(true)
+    {
         return;
     }
     let match_case = params.config.opt_bool("match_case", false);
@@ -33,9 +42,16 @@ fn run(params: &Params, emit: &mut Emit) {
     let mut has_error = false;
     let mut any_headings = false;
     let get_expected = |i: &mut usize| -> String {
-        let v = required.get(*i).cloned().unwrap_or_else(|| "[None]".to_string());
+        let v = required
+            .get(*i)
+            .cloned()
+            .unwrap_or_else(|| "[None]".to_string());
         *i += 1;
-        if v.is_empty() { "[None]".to_string() } else { v }
+        if v.is_empty() {
+            "[None]".to_string()
+        } else {
+            v
+        }
     };
 
     for &h in &tree.filter_idx(&["atxHeading", "setextHeading"]) {
@@ -62,7 +78,15 @@ fn run(params: &Params, emit: &mut Emit) {
         } else if match_any {
             i -= 1;
         } else {
-            emit.add_detail_if(tree.get(h).start_line, &expected, &actual, None, None, None, None);
+            emit.add_detail_if(
+                tree.get(h).start_line,
+                &expected,
+                &actual,
+                None,
+                None,
+                None,
+                None,
+            );
             has_error = true;
         }
     }

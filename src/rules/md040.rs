@@ -15,12 +15,21 @@ fn run(params: &Params, emit: &mut Emit) {
     let allowed: Vec<String> = params
         .config
         .opt_array("allowed_languages")
-        .map(|a| a.iter().filter_map(|v| v.as_str()).map(String::from).collect())
+        .map(|a| {
+            a.iter()
+                .filter_map(|v| v.as_str())
+                .map(String::from)
+                .collect()
+        })
         .unwrap_or_default();
     let language_only = params.config.opt_bool("language_only", false);
     let tree = params.tree;
     for &fc in &tree.filter_idx(&["codeFenced"]) {
-        let fence = match tree.descendants_by_type(fc, &[&["codeFencedFence"]]).first().copied() {
+        let fence = match tree
+            .descendants_by_type(fc, &[&["codeFencedFence"]])
+            .first()
+            .copied()
+        {
             Some(f) => f,
             None => continue,
         };
@@ -54,7 +63,9 @@ fn run(params: &Params, emit: &mut Emit) {
         {
             emit.add(
                 start_line,
-                Some(format!("Info string contains more than language: \"{text}\"")),
+                Some(format!(
+                    "Info string contains more than language: \"{text}\""
+                )),
                 None,
                 None,
                 None,

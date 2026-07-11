@@ -121,7 +121,10 @@ fn run(params: &Params, emit: &mut Emit) {
                 &line_len.to_string(),
                 None,
                 None,
-                Some(((max_length + 1) as usize, (line_len as i64 - max_length) as usize)),
+                Some((
+                    (max_length + 1) as usize,
+                    (line_len as i64 - max_length) as usize,
+                )),
                 None,
             );
         }

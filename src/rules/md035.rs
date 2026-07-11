@@ -12,7 +12,11 @@ pub const RULE: RuleMeta = RuleMeta {
 };
 
 fn run(params: &Params, emit: &mut Emit) {
-    let mut style = params.config.opt_str_or("style", "consistent").trim().to_string();
+    let mut style = params
+        .config
+        .opt_str_or("style", "consistent")
+        .trim()
+        .to_string();
     for &t in &params.tree.filter_idx(&["thematicBreak"]) {
         let tok = params.tree.get(t);
         if style == "consistent" {

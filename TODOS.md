@@ -9,7 +9,7 @@ one (one commit each).
 - [x] **Correct the rule count in README.md** — the text says "all 52" rules in
   three places, but the registry (`src/rules/mod.rs`) and README's own rule
   list both contain 53 rules.
-- [ ] **Format the codebase with `cargo fmt`** — `cargo fmt --check` currently
+- [x] **Format the codebase with `cargo fmt`** — `cargo fmt --check` currently
   reports diffs in several files.
 - [ ] **Fix clippy warnings** — `cargo clippy --all-targets` reports 50
   warnings (collapsible ifs, `is_multiple_of`, `while let` loops, etc.). Apply

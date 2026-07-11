@@ -58,7 +58,10 @@ fn run(params: &Params, emit: &mut Emit) {
                 let range = if left {
                     (1, left_hash_len + 1)
                 } else {
-                    (line_len - trail_space_len - right_hash_len, right_hash_len + 1)
+                    (
+                        line_len - trail_space_len - right_hash_len,
+                        right_hash_len + 1,
+                    )
                 };
                 emit.add_context(
                     line_number,

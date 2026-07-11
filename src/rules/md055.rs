@@ -49,7 +49,11 @@ fn run(params: &Params, emit: &mut Emit) {
             .map(|&t| tree.get(t).kind == "tableCellDivider")
             .unwrap_or(false);
         let actual_style = if actual_leading {
-            if actual_trailing { "leading_and_trailing" } else { "leading_only" }
+            if actual_trailing {
+                "leading_and_trailing"
+            } else {
+                "leading_only"
+            }
         } else if actual_trailing {
             "trailing_only"
         } else {
@@ -63,7 +67,11 @@ fn run(params: &Params, emit: &mut Emit) {
         if actual_leading != expected_leading {
             let detail = format!(
                 "{} leading pipe",
-                if expected_leading { "Missing" } else { "Unexpected" }
+                if expected_leading {
+                    "Missing"
+                } else {
+                    "Unexpected"
+                }
             );
             emit.add_detail_if(
                 tree.get(first_cell).start_line,
@@ -71,14 +79,21 @@ fn run(params: &Params, emit: &mut Emit) {
                 actual_style,
                 Some(&detail),
                 None,
-                Some(make_range(tree.get(row).start_column, tree.get(first_cell).start_column)),
+                Some(make_range(
+                    tree.get(row).start_column,
+                    tree.get(first_cell).start_column,
+                )),
                 None,
             );
         }
         if actual_trailing != expected_trailing {
             let detail = format!(
                 "{} trailing pipe",
-                if expected_trailing { "Missing" } else { "Unexpected" }
+                if expected_trailing {
+                    "Missing"
+                } else {
+                    "Unexpected"
+                }
             );
             emit.add_detail_if(
                 tree.get(last_cell).end_line,
@@ -86,7 +101,10 @@ fn run(params: &Params, emit: &mut Emit) {
                 actual_style,
                 Some(&detail),
                 None,
-                Some(make_range(tree.get(last_cell).end_column - 1, tree.get(row).end_column - 1)),
+                Some(make_range(
+                    tree.get(last_cell).end_column - 1,
+                    tree.get(row).end_column - 1,
+                )),
                 None,
             );
         }

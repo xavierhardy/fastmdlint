@@ -119,12 +119,26 @@ fn run(params: &Params, emit: &mut Emit) {
                     "Table pipe does not align with header for option \"aligned_delimiter\"",
                 );
                 for er in &e {
-                    errors_compact.push(Err060 { line: er.line, column: er.column, detail: er.detail.clone(), fix: None });
-                    errors_tight.push(Err060 { line: er.line, column: er.column, detail: er.detail.clone(), fix: None });
+                    errors_compact.push(Err060 {
+                        line: er.line,
+                        column: er.column,
+                        detail: er.detail.clone(),
+                        fix: None,
+                    });
+                    errors_tight.push(Err060 {
+                        line: er.line,
+                        column: er.column,
+                        detail: er.detail.clone(),
+                        fix: None,
+                    });
                 }
             }
             for &row in &rows {
-                let toks = descendants(tree, row, &["tableCellDivider", "tableContent", "whitespace"]);
+                let toks = descendants(
+                    tree,
+                    row,
+                    &["tableCellDivider", "tableContent", "whitespace"],
+                );
                 for i in 0..toks.len() {
                     let t = tree.get(toks[i]);
                     if t.kind != "tableCellDivider" {
@@ -147,8 +161,14 @@ fn run(params: &Params, emit: &mut Emit) {
                             errors_compact.push(Err060 {
                                 line: start_line,
                                 column: start_col,
-                                detail: "Table pipe is missing space to the left for style \"compact\"".into(),
-                                fix: Some(FixInfo { edit_column: Some(prev.end_column), insert_text: Some(" ".into()), ..Default::default() }),
+                                detail:
+                                    "Table pipe is missing space to the left for style \"compact\""
+                                        .into(),
+                                fix: Some(FixInfo {
+                                    edit_column: Some(prev.end_column),
+                                    insert_text: Some(" ".into()),
+                                    ..Default::default()
+                                }),
                             });
                         }
                     }
@@ -169,16 +189,27 @@ fn run(params: &Params, emit: &mut Emit) {
                                 errors_tight.push(Err060 {
                                     line: start_line,
                                     column: start_col,
-                                    detail: "Table pipe has space to the right for style \"tight\"".into(),
-                                    fix: Some(FixInfo { edit_column: Some(next.start_column), delete_count: Some(nlen as i64), ..Default::default() }),
+                                    detail: "Table pipe has space to the right for style \"tight\""
+                                        .into(),
+                                    fix: Some(FixInfo {
+                                        edit_column: Some(next.start_column),
+                                        delete_count: Some(nlen as i64),
+                                        ..Default::default()
+                                    }),
                                 });
                             }
                         } else {
                             errors_compact.push(Err060 {
                                 line: start_line,
                                 column: start_col,
-                                detail: "Table pipe is missing space to the right for style \"compact\"".into(),
-                                fix: Some(FixInfo { edit_column: Some(next.start_column), insert_text: Some(" ".into()), ..Default::default() }),
+                                detail:
+                                    "Table pipe is missing space to the right for style \"compact\""
+                                        .into(),
+                                fix: Some(FixInfo {
+                                    edit_column: Some(next.start_column),
+                                    insert_text: Some(" ".into()),
+                                    ..Default::default()
+                                }),
                             });
                         }
                     }
@@ -191,7 +222,9 @@ fn run(params: &Params, emit: &mut Emit) {
         if compact_allowed && (errors_compact.len() < chosen.len() || !aligned_allowed) {
             chosen = errors_compact;
         }
-        if tight_allowed && (errors_tight.len() < chosen.len() || (!aligned_allowed && !compact_allowed)) {
+        if tight_allowed
+            && (errors_tight.len() < chosen.len() || (!aligned_allowed && !compact_allowed))
+        {
             chosen = errors_tight;
         }
         for e in chosen {

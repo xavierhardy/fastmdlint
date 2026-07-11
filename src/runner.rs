@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use rayon::prelude::*;
 
 use crate::config::Config;
-use crate::linter::{lint_config, LintError};
+use crate::linter::{LintError, lint_config};
 
 /// A discovered input file.
 #[derive(Clone)]
@@ -51,8 +51,7 @@ pub fn expand_inputs(args: &[String], dot: bool) -> Vec<FileEntry> {
     // Deduplicate by canonical path, keep first.
     let mut seen = std::collections::HashSet::new();
     out.retain(|e| {
-        let key = std::fs::canonicalize(&e.path)
-            .unwrap_or_else(|_| e.path.clone());
+        let key = std::fs::canonicalize(&e.path).unwrap_or_else(|_| e.path.clone());
         seen.insert(key)
     });
     out
@@ -125,7 +124,12 @@ fn lint_one(entry: &FileEntry, cfg: &Config) -> FileResult {
 
 /// Lint files, in parallel when there is more than one.
 pub fn lint_files(files: &[FileEntry], cfg: &Config, jobs: Option<usize>) -> Vec<FileResult> {
-    let run = || files.par_iter().map(|f| lint_one(f, cfg)).collect::<Vec<_>>();
+    let run = || {
+        files
+            .par_iter()
+            .map(|f| lint_one(f, cfg))
+            .collect::<Vec<_>>()
+    };
     match jobs {
         _ if files.len() <= 1 => files.iter().map(|f| lint_one(f, cfg)).collect(),
         Some(1) => files.iter().map(|f| lint_one(f, cfg)).collect(),

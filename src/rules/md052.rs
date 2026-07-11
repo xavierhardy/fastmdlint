@@ -28,7 +28,12 @@ fn run(params: &Params, emit: &mut Emit) {
     let ignored: HashSet<String> = params
         .config
         .opt_array("ignored_labels")
-        .map(|a| a.iter().filter_map(|v| v.as_str()).map(String::from).collect())
+        .map(|a| {
+            a.iter()
+                .filter_map(|v| v.as_str())
+                .map(String::from)
+                .collect()
+        })
         .unwrap_or_else(|| ["x".to_string()].into_iter().collect());
     let tree = params.tree;
     let defs = refdata::definitions(tree);
@@ -44,7 +49,10 @@ fn run(params: &Params, emit: &mut Emit) {
         let context: String = line.chars().skip(r.col0).take(r.len).collect();
         emit.add(
             r.line0 + 1,
-            Some(format!("Missing link or image reference definition: \"{}\"", r.label)),
+            Some(format!(
+                "Missing link or image reference definition: \"{}\"",
+                r.label
+            )),
             Some(context.clone()),
             Some((r.col0 + 1, context.chars().count())),
             None,

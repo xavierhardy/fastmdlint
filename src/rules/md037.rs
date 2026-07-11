@@ -29,7 +29,12 @@ fn run(params: &Params, emit: &mut Emit) {
     let tree = params.tree;
     // Tokens that have at least one direct `data` child, in document order.
     let parents: Vec<usize> = (0..tree.tokens.len())
-        .filter(|&i| tree.get(i).children.iter().any(|&c| tree.get(c).kind == "data"))
+        .filter(|&i| {
+            tree.get(i)
+                .children
+                .iter()
+                .any(|&c| tree.get(c).kind == "data")
+        })
         .collect();
 
     for token in parents {

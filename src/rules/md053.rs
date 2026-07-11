@@ -6,7 +6,7 @@
 
 use std::collections::HashSet;
 
-use super::helpers::{ellipsify, ConfigExt};
+use super::helpers::{ConfigExt, ellipsify};
 use super::refdata;
 use super::{Emit, FixInfo, Params, RuleMeta};
 use regex::Regex;
@@ -32,7 +32,12 @@ fn run(params: &Params, emit: &mut Emit) {
     let ignored: HashSet<String> = params
         .config
         .opt_array("ignored_definitions")
-        .map(|a| a.iter().filter_map(|v| v.as_str()).map(String::from).collect())
+        .map(|a| {
+            a.iter()
+                .filter_map(|v| v.as_str())
+                .map(String::from)
+                .collect()
+        })
         .unwrap_or_else(|| ["//".to_string()].into_iter().collect());
     let tree = params.tree;
     let (defs, dups) = refdata::definition_lines(tree);
@@ -41,8 +46,10 @@ fn run(params: &Params, emit: &mut Emit) {
     // plus a scan of non-definition lines for `[label]` bracket pairs (which
     // catches shortcuts and references the parser leaves untokenized, e.g. on
     // list-continuation or wrapped lines).
-    let mut refs: HashSet<String> =
-        refdata::references(tree).into_iter().map(|r| r.label).collect();
+    let mut refs: HashSet<String> = refdata::references(tree)
+        .into_iter()
+        .map(|r| r.label)
+        .collect();
     let bracket = {
         static RE: OnceLock<Regex> = OnceLock::new();
         RE.get_or_init(|| Regex::new(r"\[([^\]]+)\]").unwrap())
@@ -67,13 +74,18 @@ fn run(params: &Params, emit: &mut Emit) {
         if !ignored.contains(label) && !refs.contains(label) {
             let line = &lines[line0];
             let fix = if single_line_definition(line) {
-                Some(FixInfo { delete_count: Some(-1), ..Default::default() })
+                Some(FixInfo {
+                    delete_count: Some(-1),
+                    ..Default::default()
+                })
             } else {
                 None
             };
             emit.add(
                 line0 + 1,
-                Some(format!("Unused link or image reference definition: \"{label}\"")),
+                Some(format!(
+                    "Unused link or image reference definition: \"{label}\""
+                )),
                 Some(ellipsify(line, false, false)),
                 Some((1, line.chars().count())),
                 fix,
@@ -84,13 +96,18 @@ fn run(params: &Params, emit: &mut Emit) {
         if !ignored.contains(&label) {
             let line = &lines[line0];
             let fix = if single_line_definition(line) {
-                Some(FixInfo { delete_count: Some(-1), ..Default::default() })
+                Some(FixInfo {
+                    delete_count: Some(-1),
+                    ..Default::default()
+                })
             } else {
                 None
             };
             emit.add(
                 line0 + 1,
-                Some(format!("Duplicate link or image reference definition: \"{label}\"")),
+                Some(format!(
+                    "Duplicate link or image reference definition: \"{label}\""
+                )),
                 Some(ellipsify(line, false, false)),
                 Some((1, line.chars().count())),
                 fix,

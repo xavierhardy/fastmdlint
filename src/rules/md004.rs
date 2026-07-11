@@ -59,7 +59,11 @@ fn run(params: &Params, emit: &mut Emit) {
             let mtok = tree.get(m);
             let item_style = marker_to_style(&mtok.text);
             if style == "sublist" {
-                if nesting_styles.get(nesting).map(|s| s.is_empty()).unwrap_or(true) {
+                if nesting_styles
+                    .get(nesting)
+                    .map(|s| s.is_empty())
+                    .unwrap_or(true)
+                {
                     let prev = if nesting > 0 {
                         nesting_styles.get(nesting - 1).cloned().unwrap_or_default()
                     } else {

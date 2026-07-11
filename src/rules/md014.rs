@@ -32,7 +32,11 @@ fn run(params: &Params, emit: &mut Emit) {
             .filter_map(|&v| {
                 let t = tree.get(v);
                 dollar_re().captures(&t.text).map(|c| {
-                    (v, c.get(1).unwrap().as_str().to_string(), c.get(2).unwrap().as_str().chars().count())
+                    (
+                        v,
+                        c.get(1).unwrap().as_str().to_string(),
+                        c.get(2).unwrap().as_str().chars().count(),
+                    )
                 })
             })
             .collect();

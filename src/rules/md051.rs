@@ -4,8 +4,8 @@ use std::collections::HashMap;
 
 use super::helpers::ConfigExt;
 use super::{Emit, FixInfo, Params, RuleMeta};
-use crate::md::tokens::html_tag_info;
 use crate::md::Tree;
+use crate::md::tokens::html_tag_info;
 use regex::Regex;
 use std::sync::OnceLock;
 
@@ -23,7 +23,9 @@ fn encode_uri_component(s: &str) -> String {
     let mut out = String::new();
     for b in s.bytes() {
         let c = b as char;
-        if c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.' | '!' | '~' | '*' | '\'' | '(' | ')') {
+        if c.is_ascii_alphanumeric()
+            || matches!(c, '-' | '_' | '.' | '!' | '~' | '*' | '\'' | '(' | ')')
+        {
             out.push(c);
         } else {
             out.push_str(&format!("%{b:02X}"));
@@ -32,7 +34,12 @@ fn encode_uri_component(s: &str) -> String {
     out
 }
 
-const INCLUDE: &[&str] = &["characterEscapeValue", "codeTextData", "data", "mathTextData"];
+const INCLUDE: &[&str] = &[
+    "characterEscapeValue",
+    "codeTextData",
+    "data",
+    "mathTextData",
+];
 const EXCLUDE: &[&str] = &["image", "reference", "resource"];
 
 fn inline_text(tree: &Tree, heading_text: usize) -> String {
@@ -140,7 +147,15 @@ fn run(params: &Params, emit: &mut Emit) {
     }
 
     for &link in &tree.filter_idx(&["link"]) {
-        let dests = tree.descendants_by_type(link, &[&["resource"], &["resourceDestination"], &["resourceDestinationRaw"], &["resourceDestinationString"]]);
+        let dests = tree.descendants_by_type(
+            link,
+            &[
+                &["resource"],
+                &["resourceDestination"],
+                &["resourceDestinationRaw"],
+                &["resourceDestinationString"],
+            ],
+        );
         for d in dests {
             let dt = tree.get(d);
             let text = dt.text.clone();
@@ -149,21 +164,27 @@ fn run(params: &Params, emit: &mut Emit) {
             }
             let slice_one: String = text.chars().skip(1).collect();
             let encoded = format!("#{}", encode_uri_component(&slice_one));
-            let ignored = ignored_re.as_ref().map(|r| r.is_match(&slice_one)).unwrap_or(false);
-            if fragments.contains_key(&encoded)
-                || line_fragment_re.is_match(&encoded)
-                || ignored
-            {
+            let ignored = ignored_re
+                .as_ref()
+                .map(|r| r.is_match(&slice_one))
+                .unwrap_or(false);
+            if fragments.contains_key(&encoded) || line_fragment_re.is_match(&encoded) || ignored {
                 continue;
             }
             let lt = tree.get(link);
             let (context, range) = if lt.start_line == lt.end_line {
-                (Some(lt.text.clone()), Some((lt.start_column, lt.end_column - lt.start_column)))
+                (
+                    Some(lt.text.clone()),
+                    Some((lt.start_column, lt.end_column - lt.start_column)),
+                )
             } else {
                 (None, None)
             };
             let text_lower = text.to_lowercase();
-            let mixed = fragments.keys().find(|k| k.to_lowercase() == text_lower).cloned();
+            let mixed = fragments
+                .keys()
+                .find(|k| k.to_lowercase() == text_lower)
+                .cloned();
             if let Some(mixed_key) = mixed {
                 if !ignore_case && mixed_key != text {
                     let fix = range.map(|(_, _)| FixInfo {

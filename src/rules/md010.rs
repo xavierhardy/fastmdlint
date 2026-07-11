@@ -27,7 +27,12 @@ fn pos_le(al: usize, ac: usize, bl: usize, bc: usize) -> bool {
 fn overlaps(a: &Range, b: &Range) -> bool {
     let lte = pos_le(a.start_line, a.start_col, b.start_line, b.start_col);
     let (first, second) = if lte { (a, b) } else { (b, a) };
-    pos_le(second.start_line, second.start_col, first.end_line, first.end_col)
+    pos_le(
+        second.start_line,
+        second.start_col,
+        first.end_line,
+        first.end_col,
+    )
 }
 
 fn run(params: &Params, emit: &mut Emit) {
@@ -63,10 +68,8 @@ fn run(params: &Params, emit: &mut Emit) {
         for &tok in &tree.filter_idx(&exclusion_types) {
             let t = tree.get(tok);
             if t.kind == "codeFenced" && !ignore_langs.is_empty() {
-                let infos = tree.descendants_by_type(
-                    tok,
-                    &[&["codeFencedFence"], &["codeFencedFenceInfo"]],
-                );
+                let infos = tree
+                    .descendants_by_type(tok, &[&["codeFencedFence"], &["codeFencedFenceInfo"]]);
                 let all = !infos.is_empty()
                     && infos
                         .iter()
@@ -80,7 +83,11 @@ fn run(params: &Params, emit: &mut Emit) {
                 start_line: t.start_line + if code_fenced { 1 } else { 0 },
                 start_col: if code_fenced { 0 } else { t.start_column },
                 end_line: t.end_line - if code_fenced { 1 } else { 0 },
-                end_col: if code_fenced { usize::MAX } else { t.end_column },
+                end_col: if code_fenced {
+                    usize::MAX
+                } else {
+                    t.end_column
+                },
             });
         }
     }

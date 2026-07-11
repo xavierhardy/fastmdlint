@@ -45,25 +45,25 @@ mod md036;
 mod md037;
 mod md038;
 mod md039;
+mod md040;
+mod md041;
+mod md042;
+mod md043;
+mod md044;
+mod md045;
+mod md046;
+mod md047;
+mod md048;
 mod md049;
 mod md051;
 mod md052;
 mod md053;
 mod md054;
-mod md042;
-mod md043;
-mod md044;
-mod md045;
 mod md055;
 mod md056;
 mod md058;
 mod md059;
 mod md060;
-mod md040;
-mod md041;
-mod md046;
-mod md047;
-mod md048;
 
 /// Severity of a reported problem.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

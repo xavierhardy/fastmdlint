@@ -53,7 +53,9 @@ fn run(params: &Params, emit: &mut Emit) {
         let class = regex::escape(p);
         Regex::new(&format!(r"\s*[{class}]+$")).unwrap()
     });
-    let re: &Regex = custom_re.as_ref().unwrap_or_else(|| default_punctuation_re());
+    let re: &Regex = custom_re
+        .as_ref()
+        .unwrap_or_else(|| default_punctuation_re());
     let entity_re = entity_re();
     let gemoji_re = gemoji_re();
 

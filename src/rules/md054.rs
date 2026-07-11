@@ -81,7 +81,10 @@ fn run(params: &Params, emit: &mut Emit) {
             if let Some(d) = dest {
                 destination = d;
                 let title = !tree
-                    .descendants_by_type(link, &[&["resource"], &["resourceTitle"], &["resourceTitleString"]])
+                    .descendants_by_type(
+                        link,
+                        &[&["resource"], &["resourceTitle"], &["resourceTitleString"]],
+                    )
                     .is_empty();
                 is_error = !inline
                     || (!url_inline
@@ -113,7 +116,8 @@ fn run(params: &Params, emit: &mut Emit) {
         if is_error {
             let (range, fix) = if lt.start_line == lt.end_line {
                 let r = (lt.start_column, lt.end_column - lt.start_column);
-                let insert = build_insert(inline, autolink, url_inline, image, &label, &destination);
+                let insert =
+                    build_insert(inline, autolink, url_inline, image, &label, &destination);
                 let fix = insert.map(|it| FixInfo {
                     edit_column: Some(r.0),
                     insert_text: Some(it),
@@ -154,7 +158,8 @@ fn build_insert(
 
 fn escape_re(s: &str, class: &str) -> String {
     let re = Regex::new(class).unwrap();
-    re.replace_all(s, |c: &regex::Captures| format!("\\{}", &c[0])).to_string()
+    re.replace_all(s, |c: &regex::Captures| format!("\\{}", &c[0]))
+        .to_string()
 }
 
 fn remove_backslash(s: &str) -> String {

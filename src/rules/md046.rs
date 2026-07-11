@@ -12,7 +12,11 @@ pub const RULE: RuleMeta = RuleMeta {
 };
 
 fn style_for(kind: &str) -> &'static str {
-    if kind == "codeFenced" { "fenced" } else { "indented" }
+    if kind == "codeFenced" {
+        "fenced"
+    } else {
+        "indented"
+    }
 }
 
 fn run(params: &Params, emit: &mut Emit) {
@@ -22,6 +26,14 @@ fn run(params: &Params, emit: &mut Emit) {
         if expected == "consistent" {
             expected = style_for(tok.kind).to_string();
         }
-        emit.add_detail_if(tok.start_line, &expected, style_for(tok.kind), None, None, None, None);
+        emit.add_detail_if(
+            tok.start_line,
+            &expected,
+            style_for(tok.kind),
+            None,
+            None,
+            None,
+            None,
+        );
     }
 }

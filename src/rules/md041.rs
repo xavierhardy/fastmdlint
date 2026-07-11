@@ -1,9 +1,9 @@
 //! MD041 — first-line-heading / first-line-h1.
 
-use super::helpers::{front_matter_has_title, is_html_flow_comment, ConfigExt};
+use super::helpers::{ConfigExt, front_matter_has_title, is_html_flow_comment};
 use super::{Emit, Params, RuleMeta};
-use crate::md::tokens::{html_tag_info, NON_CONTENT_TOKENS};
 use crate::md::Tree;
+use crate::md::tokens::{NON_CONTENT_TOKENS, html_tag_info};
 
 pub const RULE: RuleMeta = RuleMeta {
     names: &["MD041", "first-line-heading", "first-line-h1"],

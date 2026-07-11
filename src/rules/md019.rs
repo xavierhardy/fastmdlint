@@ -26,7 +26,10 @@ fn validate(params: &Params, emit: &mut Emit, heading: usize, delta: isize) {
     let text = &tree.get(heading).text;
     let len = children.len() as isize;
     let mut index: isize = if delta > 0 { 0 } else { len - 1 };
-    while index >= 0 && index < len && tree.get(children[index as usize]).kind != "atxHeadingSequence" {
+    while index >= 0
+        && index < len
+        && tree.get(children[index as usize]).kind != "atxHeadingSequence"
+    {
         index += delta;
     }
     if index < 0 || index >= len {
