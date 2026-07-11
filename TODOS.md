@@ -16,7 +16,7 @@ one (one commit each).
   the mechanical fixes; where a warning flags branch structure that
   deliberately mirrors the upstream markdownlint code, keep the structure and
   add a targeted `#[allow]`.
-- [ ] **Remove stale `tests/only-implemented.json`** — referenced by no script
+- [x] **Remove stale `tests/only-implemented.json`** — referenced by no script
   or test, and out of date (missing MD053); all rules are implemented now so
   the "only implemented rules" config no longer serves a purpose.
 - [ ] **Add GitHub Actions CI** — run `cargo fmt --check`,
